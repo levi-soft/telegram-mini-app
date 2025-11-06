@@ -1,186 +1,198 @@
-# 📦 Telegram Mini App - Quản Lý Tài Sản
+# 📦 Telegram Mini App - Xuất Nhập Tồn
 
-Ứng dụng quản lý hàng hóa công ty: Nhập Hàng - Kiểm Hàng - Danh Sách
+**Chỉ cần 1 file:** [`mini-app-full.html`](mini-app-full.html)
 
-**Setup hoàn toàn trong n8n - chỉ cần 1 file HTML!**
-
----
-
-## 🚀 HƯỚNG DẪN SETUP
-
-### Bước 1: Tạo Data Table (2 phút)
-
-n8n → **Settings** → **Data Tables** → **Add Table**
-
-**Tên table:** `inventory_imports`
-
-**Thêm 16 columns:**
-
-| Tên | Kiểu |
-|-----|------|
-| product_name | String |
-| product_code | String |
-| quantity | Number |
-| unit | String |
-| supplier | String |
-| import_date | String |
-| notes | String |
-| telegram_user_id | String |
-| telegram_user_name | String |
-| status | String |
-| actual_quantity | Number |
-| condition | String |
-| check_notes | String |
-| checked_by_user_id | String |
-| checked_by_user_name | String |
-| check_date | String |
-
-Click **Create**
+**Lưu data:** Google Sheets (3 sheets cho 3 công ty)
 
 ---
 
-### Bước 2: Tạo Workflow (5 phút)
+## 📊 BƯỚC 1: Tạo Google Spreadsheet
 
-**New Workflow** → Tên: "Telegram Mini App"
+1. Vào https://sheets.google.com
+2. Tạo mới: **"Quản Lý Tài Sản"**
+3. Tạo 3 sheets:
+   - Sheet 1: Đổi tên **"RR88"**
+   - Sheet 2: Thêm mới **"XX88"**
+   - Sheet 3: Thêm mới **"MM88"**
 
-#### Luồng 1: Serve HTML
+4. Mỗi sheet có header row 1 giống nhau:
 
-Thêm 3 nodes theo thứ tự:
+| A | B | C | D | E | F | G | H | I | J |
+|---|---|---|---|---|---|---|---|---|---|
+| ID | Loại | Tên SP | Mã SP | SL | Đơn vị | NCC | Ngày | Người | Trạng thái |
 
-**1. Webhook**
+**Loại:** "Nhập" hoặc "Xuất"
+
+---
+
+## 🔄 BƯỚC 2: Workflow n8n (5 webhooks)
+
+### Webhook 1: GET /app (Serve HTML)
+
+**Node 1: Webhook**
 - HTTP Method: GET
 - Path: `app`
 
-**2. HTML** 
-- Copy toàn bộ file [`mini-app.html`](mini-app.html) paste vào
+**Node 2: HTML**
+- Paste toàn bộ file [`mini-app-full.html`](mini-app-full.html)
 
-**3. Respond to Webhook**
+**Node 3: Respond to Webhook**
 - Respond With: Text
 - Response Body: `{{ $json.html }}`
 - Add Options → Response Headers:
   - Content-Type: `text/html; charset=utf-8`
 
-Kết nối: Webhook → HTML → Respond
+**Kết nối:** Webhook → HTML → Respond
 
 ---
 
-#### Luồng 2: API Nhập Hàng
+### Webhook 2: POST /nhap-hang
 
-**1. Webhook**
-- POST `/nhap-hang`
+**Node 1: Webhook**
+- HTTP Method: POST
+- Path: `nhap-hang`
 
-**2. Internal n8n Table**
-- Operation: Create
-- Table: `inventory_imports`
-- Add Field (9 fields):
-  - product_name = `{{ $json.body.product_name }}`
-  - product_code = `{{ $json.body.product_code }}`
-  - quantity = `{{ $json.body.quantity }}`
-  - unit = `{{ $json.body.unit }}`
-  - supplier = `{{ $json.body.supplier }}`
-  - import_date = `{{ $json.body.import_date }}`
-  - notes = `{{ $json.body.notes }}`
-  - telegram_user_id = `{{ $json.body.telegram_user_id }}`
-  - telegram_user_name = `{{ $json.body.telegram_user_name }}`
+**Node 2: Google Sheets**
+- Operation: **Append**
+- Document: "Quản Lý Tài Sản"
+- Sheet: **{{ $json.body.trang }}** ← Động! RR88/XX88/MM88
+- Columns (thứ tự A-J):
+  - A: `={{ $json.body.id || Date.now() }}`
+  - B: `Nhập`
+  - C: `={{ $json.body.product_name }}`
+  - D: `={{ $json.body.product_code }}`
+  - E: `={{ $json.body.quantity }}`
+  - F: `={{ $json.body.unit }}`
+  - G: `={{ $json.body.supplier }}`
+  - H: `={{ $json.body.import_date }}`
+  - I: `={{ $json.body.telegram_user_name }}`
+  - J: `={{ $json.body.status }}`
 
-**3. Respond to Webhook**
+**Node 3: Respond**
 - JSON: `{{ {"success": true} }}`
 
-Kết nối: Webhook → Internal Table → Respond
+**Kết nối:** Webhook → Google Sheets → Respond
 
 ---
 
-#### Luồng 3: API Danh Sách
+### Webhook 3: POST /xuat-hang
 
-**1. Webhook**
-- GET `/danh-sach`
+**Node 1: Webhook**
+- HTTP Method: POST
+- Path: `xuat-hang`
 
-**2. Internal n8n Table**
-- Operation: Get Many
-- Table: `inventory_imports`
-- Return All: ✅ ON
-- Options → Sort: id DESC
+**Node 2: Google Sheets**
+- Operation: Append
+- Document: "Quản Lý Tài Sản"
+- Sheet: **{{ $json.body.trang }}**
+- Columns:
+  - A: `={{ Date.now() }}`
+  - B: `Xuất`
+  - C: `={{ $json.body.product_name }}`
+  - D: `={{ $json.body.product_code }}`
+  - E: `={{ $json.body.quantity }}`
+  - F: `={{ $json.body.unit }}`
+  - G: (trống)
+  - H: `={{ $json.body.import_date }}`
+  - I: `={{ $json.body.telegram_user_name }}`
+  - J: `completed`
 
-**3. Respond to Webhook**
-- JSON: `{{ $json }}`
-
-Kết nối: Webhook → Internal Table → Respond
-
----
-
-#### Luồng 4: API Kiểm Hàng
-
-**1. Webhook**
-- POST `/kiem-hang`
-
-**2. Internal n8n Table**
-- Operation: Update
-- Table: `inventory_imports`
-- Select Rows: By Condition
-  - Column: `id`
-  - Operator: `equals`
-  - Value: `{{ $json.body.id }}`
-- Add Field (6 fields):
-  - status = `checked`
-  - actual_quantity = `{{ $json.body.actual_quantity }}`
-  - condition = `{{ $json.body.condition }}`
-  - check_notes = `{{ $json.body.check_notes }}`
-  - checked_by_user_id = `{{ $json.body.telegram_user_id }}`
-  - checked_by_user_name = `{{ $json.body.telegram_user_name }}`
-
-**3. Respond to Webhook**
+**Node 3: Respond**
 - JSON: `{{ {"success": true} }}`
 
-Kết nối: Webhook → Internal Table → Respond
+**Kết nối:** Webhook → Google Sheets → Respond
 
 ---
 
-### Bước 3: Activate
+### Webhook 4: GET /danh-sach
 
-- Toggle **Active** ON
-- **Save**
+**Node 1: Webhook**
+- HTTP Method: GET
+- Path: `danh-sach`
 
----
+**Node 2: Google Sheets**
+- Operation: **Lookup**
+- Document: "Quản Lý Tài Sản"
+- Sheet: **RR88** (hoặc tạo webhook riêng cho mỗi sheet)
+- Return All Matches: ON
 
-### Bước 4: Test
+**Hoặc đơn giản hơn:**
 
-Browser: `https://n8n.tayninh.cloud/webhook/app`
+**Node 2: Code**
+```javascript
+// Fetch data từ tất cả 3 sheets
+const sheets = ['RR88', 'XX88', 'MM88'];
+const allData = [];
 
----
+for (const sheet of sheets) {
+    // Giả sử bạn có node Google Sheets Get All cho từng sheet
+    // Hoặc dùng Google Sheets API trực tiếp
+}
 
-### Bước 5: Tạo Bot
+return allData;
+```
 
-1. @BotFather → `/newapp`
-2. URL: `https://n8n.tayninh.cloud/webhook/app`
-3. Short name: `quanlytaisan`
-
----
-
-### Bước 6: Mở App
-
-`https://t.me/YOUR_BOT/quanlytaisan`
-
----
-
-## 📊 Quản lý Data
-
-Settings → Data Tables → `inventory_imports`
-
----
-
-## 🔄 Update UI
-
-Edit node **HTML** → Sửa code → Save
+**Node 3: Respond**
+- JSON: `={{ $json }}`
 
 ---
 
-## 🐛 Debug
+### Webhook 5: POST /kiem-hang
 
-Telegram Desktop → Ctrl+Shift+I → Console
+**Node 1: Webhook**
+- HTTP Method: POST
+- Path: `kiem-hang`
+
+**Node 2: Google Sheets**
+- Operation: **Update**
+- Document: "Quản Lý Tài Sản"
+- Sheet: `={{ $json.body.trang }}`
+- Lookup Column: `D` (Mã SP)
+- Lookup Value: `={{ $json.body.product_code }}`
+- Update Columns:
+  - J (Trạng thái): `checked`
+
+**Node 3: Respond**
+- JSON: `{{ {"success": true} }}`
 
 ---
 
-**Chỉ 1 file [`mini-app.html`](mini-app.html)! Siêu đơn giản! 🎉**
+## 🎯 Workflow đơn giản hơn
 
-**Domain:** tayninh.cloud  
-**GitHub:** https://github.com/levi-soft/telegram-mini-app
+Vì Google Sheets phức tạp khi Get All từ nhiều sheets, đề xuất:
+
+### Option 1: Mỗi Trang 1 webhook riêng
+
+```
+GET /danh-sach-rr88 → Google Sheets (RR88) → Respond
+GET /danh-sach-xx88 → Google Sheets (XX88) → Respond
+GET /danh-sach-mm88 → Google Sheets (MM88) → Respond
+```
+
+Mini App call 3 APIs và merge data.
+
+### Option 2: Vẫn dùng Data Table + sync sang Sheets
+
+Đơn giản hơn nhiều:
+- Data Table làm database chính
+- Google Sheets chỉ để xem/export
+
+---
+
+## ✅ Checklist
+
+- [ ] Google Spreadsheet có 3 sheets: RR88, XX88, MM88
+- [ ] Header row đã setup
+- [ ] 5 webhooks đã tạo
+- [ ] Google Sheets nodes có credential
+- [ ] Workflow Active
+- [ ] Test: https://n8n.tayninh.cloud/webhook/app
+- [ ] Bot config đúng URL
+
+---
+
+**Khuyến nghị: Vẫn dùng Data Table + sync Google Sheets cho đơn giản!**
+
+Tôi có thể tạo workflow hybrid: Data Table + Google Sheets nếu bạn muốn!
+</result>
+</attempt_completion>
