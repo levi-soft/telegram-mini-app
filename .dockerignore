@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+TRAEFIK_DEPLOY.md
+QUICK_DEPLOY_TRAEFIK.md
+*.md
+
+# Docker files
+Dockerfile
+docker-compose*.yml
+compose.yml
+.dockerignore
+.env*
+
+# Node modules (if added later)
+node_modules
+npm-debug.log
+
+# Editor
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups
+*.tar.gz
+*.zip
+*.bak

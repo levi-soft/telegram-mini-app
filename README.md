@@ -16,9 +16,37 @@
 
 ### Bước 2: Host ứng dụng
 
-Bạn có 3 cách để host Mini App:
+Bạn có 5 cách để host Mini App:
 
-#### Cách 1: Sử dụng GitHub Pages (Miễn phí, Dễ nhất) ⭐
+#### Cách 1: VPS với Traefik (Nếu đã có VPS + Traefik) ⭐⭐⭐
+
+📖 **[Xem hướng dẫn chi tiết deploy với Traefik tại đây](TRAEFIK_DEPLOY.md)**
+
+**Ưu điểm:**
+- ✅ Tận dụng VPS và Traefik có sẵn
+- ✅ SSL tự động (Let's Encrypt)
+- ✅ Không cần setup từ đầu
+- ✅ Chung network với các service khác (n8n, etc.)
+
+**Deploy nhanh:**
+```bash
+# 1. Thêm TELEGRAM_SUBDOMAIN=app vào .env
+# 2. Thêm service telegram-mini-app vào compose.yml (xem TRAEFIK_DEPLOY.md)
+# 3. Deploy
+cd /opt/n8n
+docker-compose up -d --build telegram-mini-app
+```
+
+#### Cách 2: VPS với Docker Compose (Mới setup VPS) 🚀
+
+📖 **[Xem hướng dẫn chi tiết VPS deployment tại đây](VPS_DEPLOY.md)**
+
+**Ưu điểm:**
+- ✅ Toàn quyền kiểm soát
+- ✅ HTTPS với Nginx Proxy Manager
+- ✅ Chi phí ~$5/tháng
+
+#### Cách 3: GitHub Pages (Miễn phí, Dễ nhất) ⭐
 
 📖 **[Xem hướng dẫn chi tiết deploy GitHub Pages tại đây](GITHUB_DEPLOY.md)**
 
@@ -30,14 +58,14 @@ Tóm tắt nhanh:
 5. Nhấn Save
 6. GitHub sẽ cung cấp URL (ví dụ: `https://username.github.io/repository-name`)
 
-#### Cách 2: Sử dụng Vercel (Miễn phí)
+#### Cách 4: Vercel (Miễn phí)
 
 1. Đăng ký tài khoản tại [vercel.com](https://vercel.com)
 2. Kết nối với GitHub repository
 3. Deploy tự động
 4. Nhận URL từ Vercel
 
-#### Cách 3: Sử dụng Netlify (Miễn phí)
+#### Cách 5: Netlify (Miễn phí)
 
 1. Đăng ký tài khoản tại [netlify.com](https://netlify.com)
 2. Kéo thả folder chứa các file vào Netlify
