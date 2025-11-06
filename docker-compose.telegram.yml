@@ -1,23 +1,18 @@
-version: '3.8'
-
 services:
   telegram-mini-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: telegram-mini-app
     restart: unless-stopped
     expose:
       - "80"
     labels:
-      # Bật Traefik
       - "traefik.enable=true"
-      
-      # HTTP router
       - "traefik.http.routers.telegram-app.rule=Host(`${TELEGRAM_SUBDOMAIN}.${DOMAIN_NAME}`)"
       - "traefik.http.routers.telegram-app.entrypoints=web,websecure"
       - "traefik.http.routers.telegram-app.tls=true"
       - "traefik.http.routers.telegram-app.tls.certresolver=mytlschallenge"
-      
-      # Middleware cho security headers
       - "traefik.http.middlewares.telegram-app.headers.SSLRedirect=true"
       - "traefik.http.middlewares.telegram-app.headers.STSSeconds=315360000"
       - "traefik.http.middlewares.telegram-app.headers.browserXSSFilter=true"
@@ -28,16 +23,10 @@ services:
       - "traefik.http.middlewares.telegram-app.headers.STSPreload=true"
       - "traefik.http.middlewares.telegram-app.headers.frameDeny=false"
       - "traefik.http.middlewares.telegram-app.headers.contentSecurityPolicy=frame-ancestors 'self' https://web.telegram.org https://telegram.org"
-      
-      # Apply middleware
       - "traefik.http.routers.telegram-app.middlewares=telegram-app@docker"
-      
-      # Service
-      - "traefik.http.services.telegram-app.loadbalancer.server.port=80"
-    
+      - "traefik.http.services.telegram-mini-app.loadbalancer.server.port=80"
     networks:
-      - traefik_default
-    
+      - n8n-compose_default
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
@@ -46,5 +35,5 @@ services:
       start_period: 40s
 
 networks:
-  traefik_default:
+  n8n-compose_default:
     external: true
