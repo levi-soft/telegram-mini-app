@@ -84,6 +84,28 @@
         }
         .item:active { background: #f9f9f9; }
         .hidden { display: none; }
+        .stats { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2481cc;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -95,6 +117,16 @@
 
         <!-- Menu -->
         <div id="menu-page">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="total">0</div>
+                    <div class="stat-label">Tổng mặt hàng</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pending">0</div>
+                    <div class="stat-label">Cần kiểm tra</div>
+                </div>
+            </div>
             <button class="menu-btn" onclick="showPage('import')">
                 <div style="font-size:28px;margin-bottom:8px;">📥</div>
                 <div style="font-size:18px;font-weight:bold;">Nhập Hàng</div>
@@ -194,10 +226,58 @@
             if (page === 'import') setToday();
             if (page === 'list') loadList();
             if (page === 'check') loadCheckList();
+            if (page === 'menu') updateStats();
         }
 
         function setToday() {
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        }
+
+        async function updateStats() {
+            try {
+                const res = await fetch(API + '/danh-sach');
+                const rawData = await res.json();
+                const items = parseResponse(rawData);
+                
+                document.getElementById('total').textContent = items.length;
+                document.getElementById('pending').textContent = items.filter(i => i.status === 'pending').length;
+            } catch (err) {
+                console.error('Update stats error:', err);
+            }
+        }
+
+        function parseResponse(data) {
+            // Parse response từ n8n thành array
+            console.log('Raw response type:', typeof data, data);
+            
+            if (Array.isArray(data)) {
+                console.log('Format: array', data.length, 'items');
+                return data;
+            }
+            
+            if (data && typeof data === 'object') {
+                // Nếu có key "data"
+                if (data.data && Array.isArray(data.data)) {
+                    console.log('Format: {data: array}', data.data.length, 'items');
+                    return data.data;
+                }
+                
+                // Nếu là object với numeric keys: {0: {...}, 1: {...}}
+                const values = Object.values(data);
+                if (values.length > 0 && values[0] && typeof values[0] === 'object') {
+                    console.log('Format: object with keys', values.length, 'items');
+                    return values;
+                }
+                
+                // Single object → convert thành array
+                if (data.id || data.product_name) {
+                    console.log('Format: single object');
+                    return [data];
+                }
+            }
+            
+            console.warn('Unknown format, returning empty array');
+            return [];
         }
 
         document.getElementById('form-import').addEventListener('submit', async (e) => {
@@ -215,9 +295,9 @@
                         product_code: document.getElementById('code').value,
                         quantity: parseInt(document.getElementById('qty').value),
                         unit: document.getElementById('unit').value,
-                        supplier: document.getElementById('supplier').value,
+                        supplier: document.getElementById('supplier').value || '',
                         import_date: document.getElementById('date').value,
-                        notes: document.getElementById('notes').value,
+                        notes: document.getElementById('notes').value || '',
                         telegram_user_id: user.id.toString(),
                         telegram_user_name: user.first_name
                     })
@@ -228,9 +308,12 @@
                     e.target.reset();
                     setTimeout(() => showPage('menu'), 500);
                 } else {
+                    const error = await res.text();
+                    console.error('Save error:', error);
                     tg.showAlert('❌ Lỗi khi lưu!');
                 }
             } catch (err) {
+                console.error('Submit error:', err);
                 tg.showAlert('❌ Lỗi kết nối!');
             } finally {
                 btn.disabled = false;
@@ -239,39 +322,64 @@
         });
 
         async function loadList() {
+            document.getElementById('list').innerHTML = '⏳ Đang tải...';
+            
             try {
                 const res = await fetch(API + '/danh-sach');
-                const data = await res.json();
-                const list = data.data || [];
+                const rawData = await res.json();
+                const list = parseResponse(rawData);
                 
-                document.getElementById('list').innerHTML = list.length ? list.map(i => `
+                console.log('Danh sách items:', list.length, list);
+                
+                if (!list || list.length === 0) {
+                    document.getElementById('list').innerHTML = '<p style="text-align:center;color:#999;padding:40px 0;">Chưa có dữ liệu</p>';
+                    return;
+                }
+                
+                document.getElementById('list').innerHTML = list.map(i => `
                     <div class="item">
-                        <div style="font-weight:bold;font-size:16px;margin-bottom:5px;">${i.product_name}</div>
-                        <div style="color:#666;font-size:14px;">Mã: ${i.product_code} • ${i.quantity} ${i.unit}</div>
+                        <div style="font-weight:bold;font-size:16px;margin-bottom:5px;">${i.product_name || 'N/A'}</div>
+                        <div style="color:#666;font-size:14px;">Mã: ${i.product_code || 'N/A'} • ${i.quantity || 0} ${i.unit || ''}</div>
                         ${i.supplier ? `<div style="color:#666;font-size:14px;">NCC: ${i.supplier}</div>` : ''}
-                        <div style="color:#999;font-size:12px;margin-top:5px;">📅 ${i.import_date} • 👤 ${i.telegram_user_name}</div>
+                        <div style="color:#999;font-size:12px;margin-top:5px;">📅 ${i.import_date || 'N/A'} • 👤 ${i.telegram_user_name || 'Unknown'}</div>
+                        ${i.status === 'checked' 
+                            ? '<div style="color:#4caf50;font-size:12px;margin-top:3px;">✅ Đã kiểm</div>' 
+                            : '<div style="color:#ff9800;font-size:12px;margin-top:3px;">⏳ Chờ kiểm</div>'}
                     </div>
-                `).join('') : '<p style="text-align:center;color:#999;padding:40px 0;">Chưa có dữ liệu</p>';
+                `).join('');
             } catch (err) {
-                document.getElementById('list').innerHTML = '<p style="color:red;">Lỗi tải dữ liệu</p>';
+                console.error('Load list error:', err);
+                document.getElementById('list').innerHTML = `<p style="color:red;">Lỗi: ${err.message}<br><small>Xem console (Ctrl+Shift+I)</small></p>`;
             }
         }
 
         async function loadCheckList() {
+            document.getElementById('check-list').innerHTML = '⏳ Đang tải...';
+            
             try {
                 const res = await fetch(API + '/danh-sach');
-                const data = await res.json();
-                const pending = (data.data || []).filter(i => i.status === 'pending');
+                const rawData = await res.json();
+                const allItems = parseResponse(rawData);
+                const pending = allItems.filter(i => i.status === 'pending');
                 
-                document.getElementById('check-list').innerHTML = pending.length ? pending.map(i => `
+                console.log('Tất cả items:', allItems.length);
+                console.log('Pending items:', pending.length, pending);
+                
+                if (pending.length === 0) {
+                    document.getElementById('check-list').innerHTML = '<p style="text-align:center;color:#999;padding:40px 0;">Không có hàng cần kiểm</p>';
+                    return;
+                }
+                
+                document.getElementById('check-list').innerHTML = pending.map(i => `
                     <div class="item" onclick="checkItem(${i.id}, '${i.product_name}', ${i.quantity}, '${i.unit}')">
                         <div style="font-weight:bold;font-size:16px;margin-bottom:5px;">${i.product_name}</div>
                         <div style="color:#666;font-size:14px;">Mã: ${i.product_code} • ${i.quantity} ${i.unit}</div>
                         <div style="color:#ff9800;font-size:12px;margin-top:5px;">⏳ Chờ kiểm tra</div>
                     </div>
-                `).join('') : '<p style="text-align:center;color:#999;padding:40px 0;">Không có hàng cần kiểm</p>';
+                `).join('');
             } catch (err) {
-                document.getElementById('check-list').innerHTML = '<p style="color:red;">Lỗi tải dữ liệu</p>';
+                console.error('Load check list error:', err);
+                document.getElementById('check-list').innerHTML = `<p style="color:red;">Lỗi: ${err.message}<br><small>Xem console</small></p>`;
             }
         }
 
@@ -299,14 +407,21 @@
                     tg.showAlert(`✅ Đã kiểm: ${name}`);
                     loadCheckList();
                 } else {
+                    const error = await res.text();
+                    console.error('Check error:', error);
                     tg.showAlert('❌ Lỗi khi kiểm!');
                 }
             } catch (err) {
+                console.error('Check item error:', err);
                 tg.showAlert('❌ Lỗi kết nối!');
             }
         }
 
         setToday();
+        updateStats();
+        console.log('✅ App initialized');
+        console.log('👤 User:', user);
+        console.log('🌐 API:', API);
     </script>
 </body>
 </html>

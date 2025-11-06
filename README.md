@@ -1,133 +1,186 @@
 # 📦 Telegram Mini App - Quản Lý Tài Sản
 
-Ứng dụng quản lý hàng hóa công ty trên Telegram:
-- **📥 Nhập Hàng** - Ghi nhận hàng hóa nhập kho
-- **✅ Kiểm Hàng** - Kiểm tra tồn kho
-- **📋 Danh Sách** - Xem tất cả phiếu nhập
+Ứng dụng quản lý hàng hóa công ty: Nhập Hàng - Kiểm Hàng - Danh Sách
 
-**Hoàn toàn trong n8n - không cần deploy web riêng!**
+**Setup hoàn toàn trong n8n - chỉ cần 1 file HTML!**
 
 ---
 
-## ⚡ Setup siêu nhanh - 3 bước
+## 🚀 HƯỚNG DẪN SETUP
 
-### 📖 Hướng dẫn chính:
+### Bước 1: Tạo Data Table (2 phút)
 
-**[`HUONG_DAN_N8N.md`](HUONG_DAN_N8N.md)** ⭐ - Hướng dẫn ngắn gọn
+n8n → **Settings** → **Data Tables** → **Add Table**
 
-### 🚀 Tóm tắt:
+**Tên table:** `inventory_imports`
 
-**Bước 1: Tạo Data Table**
-```
-Settings → Data Tables → Add Table: inventory_imports
-Thêm 16 columns (xem DATA_TABLE_GUIDE.md)
-```
+**Thêm 16 columns:**
 
-**Bước 2: Tạo Workflow**
-```
-Tạo 4 luồng webhook:
-1. GET /app → HTML → Respond (serve Mini App)
-2. POST /nhap-hang → Internal Table Create → Respond
-3. POST /kiem-hang → Internal Table Update → Respond
-4. GET /danh-sach → Internal Table Get All → Respond
-```
+| Tên | Kiểu |
+|-----|------|
+| product_name | String |
+| product_code | String |
+| quantity | Number |
+| unit | String |
+| supplier | String |
+| import_date | String |
+| notes | String |
+| telegram_user_id | String |
+| telegram_user_name | String |
+| status | String |
+| actual_quantity | Number |
+| condition | String |
+| check_notes | String |
+| checked_by_user_id | String |
+| checked_by_user_name | String |
+| check_date | String |
 
-**Bước 3: Config Bot**
-```
-@BotFather → /newapp
-URL: https://n8n.tayninh.cloud/webhook/app
-```
-
----
-
-## 📄 File HTML để paste vào HTML node:
-
-**[`mini-app.html`](mini-app.html)** - Copy toàn bộ và paste vào HTML node trong n8n
+Click **Create**
 
 ---
 
-## 📚 Tài liệu đầy đủ:
+### Bước 2: Tạo Workflow (5 phút)
 
-1. **[`HUONG_DAN_N8N.md`](HUONG_DAN_N8N.md)** ⭐⭐⭐ - Hướng dẫn tạo workflow
-2. **[`DATA_TABLE_GUIDE.md`](DATA_TABLE_GUIDE.md)** - Cách tạo Data Table (KHÔNG có Required!)
-3. **[`mini-app.html`](mini-app.html)** - HTML đầy đủ để paste vào node
-4. **[`N8N_MANUAL_GUIDE.md`](N8N_MANUAL_GUIDE.md)** - Hướng dẫn chi tiết hơn
+**New Workflow** → Tên: "Telegram Mini App"
 
----
+#### Luồng 1: Serve HTML
 
-## 🎯 URLs
+Thêm 3 nodes theo thứ tự:
 
-- **Mini App:** `https://n8n.tayninh.cloud/webhook/app`
-- **n8n Dashboard:** `https://n8n.tayninh.cloud`
+**1. Webhook**
+- HTTP Method: GET
+- Path: `app`
 
----
+**2. HTML** 
+- Copy toàn bộ file [`mini-app.html`](mini-app.html) paste vào
 
-## ✅ Ưu điểm
+**3. Respond to Webhook**
+- Respond With: Text
+- Response Body: `{{ $json.html }}`
+- Add Options → Response Headers:
+  - Content-Type: `text/html; charset=utf-8`
 
-- ✅ Chỉ cần làm trong n8n UI
-- ✅ Không cần deploy web
-- ✅ Không cần Docker
-- ✅ Không cần Git (optional)
-- ✅ Update dễ: Sửa HTML node → Save
-- ✅ Data lưu trong n8n Data Table
-- ✅ Quản lý dễ trong n8n UI
+Kết nối: Webhook → HTML → Respond
 
 ---
 
-## 🎨 Tính năng
+#### Luồng 2: API Nhập Hàng
 
-✅ Nhập hàng đầy đủ thông tin  
-✅ Kiểm hàng và cập nhật  
-✅ Xem danh sách  
-✅ Hiển thị người nhập/kiểm  
-✅ Mobile responsive  
-✅ Feedback rõ ràng  
-✅ HTTPS tự động  
+**1. Webhook**
+- POST `/nhap-hang`
 
----
+**2. Internal n8n Table**
+- Operation: Create
+- Table: `inventory_imports`
+- Add Field (9 fields):
+  - product_name = `{{ $json.body.product_name }}`
+  - product_code = `{{ $json.body.product_code }}`
+  - quantity = `{{ $json.body.quantity }}`
+  - unit = `{{ $json.body.unit }}`
+  - supplier = `{{ $json.body.supplier }}`
+  - import_date = `{{ $json.body.import_date }}`
+  - notes = `{{ $json.body.notes }}`
+  - telegram_user_id = `{{ $json.body.telegram_user_id }}`
+  - telegram_user_name = `{{ $json.body.telegram_user_name }}`
 
-## 🔄 Workflow Structure
+**3. Respond to Webhook**
+- JSON: `{{ {"success": true} }}`
 
-```
-1. Webhook GET /app
-   → HTML Node (paste mini-app.html)
-   → Respond to Webhook (HTML)
-
-2. Webhook POST /nhap-hang
-   → Internal Table (Create)
-   → Respond (JSON)
-
-3. Webhook POST /kiem-hang
-   → Internal Table (Update by ID)
-   → Respond (JSON)
-
-4. Webhook GET /danh-sach
-   → Internal Table (Get All)
-   → Respond (JSON)
-```
+Kết nối: Webhook → Internal Table → Respond
 
 ---
 
-## 📊 Quản lý dữ liệu
+#### Luồng 3: API Danh Sách
 
-1. Vào n8n → Settings → Data Tables
-2. Click `inventory_imports`
-3. Xem/sửa/xóa records
-4. Export CSV/JSON
+**1. Webhook**
+- GET `/danh-sach`
+
+**2. Internal n8n Table**
+- Operation: Get Many
+- Table: `inventory_imports`
+- Return All: ✅ ON
+- Options → Sort: id DESC
+
+**3. Respond to Webhook**
+- JSON: `{{ $json }}`
+
+Kết nối: Webhook → Internal Table → Respond
 
 ---
 
-## 🔧 Mở rộng
+#### Luồng 4: API Kiểm Hàng
 
-Từ n8n, dễ dàng thêm:
-- 📧 Email thông báo
-- 📊 Báo cáo tự động
-- 💬 Telegram notification
-- 📈 Google Sheets sync
+**1. Webhook**
+- POST `/kiem-hang`
+
+**2. Internal n8n Table**
+- Operation: Update
+- Table: `inventory_imports`
+- Select Rows: By Condition
+  - Column: `id`
+  - Operator: `equals`
+  - Value: `{{ $json.body.id }}`
+- Add Field (6 fields):
+  - status = `checked`
+  - actual_quantity = `{{ $json.body.actual_quantity }}`
+  - condition = `{{ $json.body.condition }}`
+  - check_notes = `{{ $json.body.check_notes }}`
+  - checked_by_user_id = `{{ $json.body.telegram_user_id }}`
+  - checked_by_user_name = `{{ $json.body.telegram_user_name }}`
+
+**3. Respond to Webhook**
+- JSON: `{{ {"success": true} }}`
+
+Kết nối: Webhook → Internal Table → Respond
 
 ---
 
-**Live:** https://n8n.tayninh.cloud/webhook/app  
-**GitHub:** https://github.com/levi-soft/telegram-mini-app  
+### Bước 3: Activate
+
+- Toggle **Active** ON
+- **Save**
+
+---
+
+### Bước 4: Test
+
+Browser: `https://n8n.tayninh.cloud/webhook/app`
+
+---
+
+### Bước 5: Tạo Bot
+
+1. @BotFather → `/newapp`
+2. URL: `https://n8n.tayninh.cloud/webhook/app`
+3. Short name: `quanlytaisan`
+
+---
+
+### Bước 6: Mở App
+
+`https://t.me/YOUR_BOT/quanlytaisan`
+
+---
+
+## 📊 Quản lý Data
+
+Settings → Data Tables → `inventory_imports`
+
+---
+
+## 🔄 Update UI
+
+Edit node **HTML** → Sửa code → Save
+
+---
+
+## 🐛 Debug
+
+Telegram Desktop → Ctrl+Shift+I → Console
+
+---
+
+**Chỉ 1 file [`mini-app.html`](mini-app.html)! Siêu đơn giản! 🎉**
+
 **Domain:** tayninh.cloud  
-**Developed with ❤️ using n8n**
+**GitHub:** https://github.com/levi-soft/telegram-mini-app
