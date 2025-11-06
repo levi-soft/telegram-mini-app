@@ -79,22 +79,23 @@
 
 ### Table: `products`
 ```
-- id: String (Primary key)
-- name: String
-- product_code: String
+- id: Number (Auto-increment, Primary key - do Data Table tự sinh)
+- product_name: String
+- product_code: String (Mã sản phẩm)
 - category: String
 - price: Number
 - description: String
 - created_at: String
-- created_by: String
+- created_by: String (Telegram user ID)
+- created_by_username: String (Telegram username, tự động lấy)
 ```
 
 ### Table: `transactions`
 ```
-- id: String (Primary key)
+- id: Number (Auto-increment, Primary key - do Data Table tự sinh)
 - type: String (import/export)
 - page: String (RR88/XX88/MM88)
-- product_id: String
+- product_id: Number (ID từ products table)
 - quantity: Number
 - supplier: String
 - customer: String
@@ -105,11 +106,14 @@
 
 ### Table: `inventory`
 ```
-- product_id: String
+- id: Number (Auto-increment, Primary key - do Data Table tự sinh)
+- product_id: Number (ID từ products table)
 - page: String (RR88/XX88/MM88)
 - quantity: Number
 - last_updated: String
 ```
+
+**Lưu ý:** Cột `id` tự động được Data Table tạo, không cần định nghĩa thủ công.
 
 ---
 

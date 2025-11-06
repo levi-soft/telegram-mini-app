@@ -47,15 +47,16 @@ Vào **Settings** → **Data Tables** → **Create Data Table**
 
 | Column | Type | Required | Ghi Chú |
 |--------|------|----------|---------|
-| name | String | ✅ | Tên sản phẩm |
+| product_name | String | ✅ | Tên sản phẩm |
 | product_code | String | ✅ | Mã sản phẩm |
 | category | String | ❌ | Danh mục |
 | price | Number | ❌ | Giá (VND) |
 | description | String | ❌ | Mô tả |
 | created_at | String | ✅ | Thời gian tạo |
-| created_by | String | ❌ | User tạo |
+| created_by | String | ❌ | User ID (Telegram) |
+| created_by_username | String | ❌ | Username (Telegram) |
 
-**Lưu ý:** Data Table tự động có cột `id` (auto-increment), không cần tạo thêm.
+**Lưu ý:** Data Table tự động có cột `id` (auto-increment). Username tự động lấy từ Telegram WebApp API.
 
 ### 2.2. Tạo Data Table "transactions"
 
@@ -160,18 +161,21 @@ const timestamp = $json.body.timestamp || new Date().toISOString();
 
 return [{
   json: {
-    name: data.name,
+    product_name: data.product_name,
     product_code: data.product_code,
     category: data.category || '',
     price: data.price || 0,
     description: data.description || '',
     created_at: timestamp,
-    created_by: user.id || 'unknown'
+    created_by: user.id || 'unknown',
+    created_by_username: user.username || user.first_name || 'unknown'
   }
 }];
 ```
 
-**Lưu ý:** Không cần tạo `id`, Data Table tự động sinh ID (auto-increment).
+**Lưu ý:**
+- Không cần tạo `id`, Data Table tự động sinh
+- `created_by_username` tự động lấy từ Telegram user object (username hoặc first_name)
 
 **Node: Data Table - Create**
 - Table: `products`

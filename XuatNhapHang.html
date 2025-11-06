@@ -801,7 +801,7 @@
                         <thead>
                             <tr>
                                 <th>Sản Phẩm</th>
-                                <th>SKU</th>
+                                <th>Mã SP</th>
                                 <th>Trang</th>
                                 <th>Tồn Kho</th>
                                 <th>Trạng Thái</th>
@@ -909,7 +909,7 @@
                         <input type="text" class="form-control" id="productName" required placeholder="Nhập tên sản phẩm">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Mã SKU *</label>
+                        <label class="form-label">Mã Sản Phẩm *</label>
                         <input type="text" class="form-control" id="productSKU" required placeholder="VD: SP001">
                     </div>
                     <div class="form-group">
@@ -939,7 +939,7 @@
                         <thead>
                             <tr>
                                 <th>Tên</th>
-                                <th>SKU</th>
+                                <th>Mã SP</th>
                                 <th>Danh Mục</th>
                                 <th>Giá</th>
                                 <th>Thao Tác</th>
@@ -967,7 +967,7 @@
     <script>
         // Configuration - API tự động từ n8n origin
         const CONFIG = {
-            N8N_WEBHOOK_URL: window.location.origin + '/webhook/api',
+            N8N_WEBHOOK_URL: window.location.origin + '/webhook/xuatnhaphang-api',
         };
 
         // Initialize Telegram WebApp
@@ -1243,13 +1243,13 @@
         async function handleAddProduct(e) {
             e.preventDefault();
             
-            const name = document.getElementById('productName').value;
+            const product_name = document.getElementById('productName').value;
             const product_code = document.getElementById('productSKU').value;
             const category = document.getElementById('productCategory').value;
             const price = parseFloat(document.getElementById('productPrice').value) || 0;
             const description = document.getElementById('productDescription').value;
 
-            if (!name || !product_code) {
+            if (!product_name || !product_code) {
                 showAlert('Vui lòng điền đầy đủ thông tin bắt buộc', 'danger');
                 return;
             }
@@ -1258,7 +1258,7 @@
 
             try {
                 const result = await apiCall('addProduct', {
-                    name,
+                    product_name,
                     product_code,
                     category,
                     price,
@@ -1316,7 +1316,7 @@
                     const exportSelect = document.getElementById('exportProduct');
                     
                     const options = result.data.map(p => 
-                        `<option value="${p.id}">${p.name} (${p.product_code})</option>`
+                        `<option value="${p.id}">${p.product_name} (${p.product_code})</option>`
                     ).join('');
                     
                     importSelect.innerHTML = '<option value="">-- Chọn Sản Phẩm --</option>' + options;
@@ -1378,7 +1378,7 @@
             let filtered = AppState.products;
             if (search) {
                 filtered = filtered.filter(p => 
-                    p.name.toLowerCase().includes(search) || 
+                    p.product_name.toLowerCase().includes(search) || 
                     p.product_code.toLowerCase().includes(search)
                 );
             }
@@ -1397,7 +1397,7 @@
 
             tbody.innerHTML = filtered.map(p => `
                 <tr>
-                    <td>${p.name}</td>
+                    <td>${p.product_name}</td>
                     <td><span class="badge badge-primary">${p.product_code}</span></td>
                     <td>${p.category || '-'}</td>
                     <td>${formatCurrency(p.price)}</td>
@@ -1422,7 +1422,7 @@
             if (search) {
                 filtered = filtered.filter(inv => {
                     const product = AppState.products.find(p => p.id === inv.product_id);
-                    return product && product.name.toLowerCase().includes(search);
+                    return product && product.product_name.toLowerCase().includes(search);
                 });
             }
 
@@ -1445,7 +1445,7 @@
                 
                 return `
                     <tr>
-                        <td>${product?.name || 'N/A'}</td>
+                        <td>${product?.product_name || 'N/A'}</td>
                         <td><span class="badge badge-primary">${product?.product_code || 'N/A'}</span></td>
                         <td><span class="badge badge-primary">${inv.page}</span></td>
                         <td><strong>${inv.quantity}</strong></td>
@@ -1504,7 +1504,7 @@
                     <tr>
                         <td>${formatDate(tx.timestamp)}</td>
                         <td><span class="badge ${typeBadge}">${typeText}</span></td>
-                        <td>${product?.name || 'N/A'}</td>
+                        <td>${product?.product_name || 'N/A'}</td>
                         <td><span class="badge badge-primary">${tx.page}</span></td>
                         <td><strong>${tx.quantity}</strong></td>
                         <td>${tx.note || tx.supplier || tx.customer || '-'}</td>
@@ -1592,7 +1592,7 @@
                     <div style="padding: 12px; border-left: 3px solid ${color}; background: var(--light-color); margin-bottom: 10px; border-radius: 5px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <strong>${icon} ${typeText} hàng</strong> - ${product?.name || 'N/A'}
+                                <strong>${icon} ${typeText} hàng</strong> - ${product?.product_name || 'N/A'}
                                 <div style="font-size: 12px; color: #666; margin-top: 5px;">
                                     ${tx.page} • Số lượng: ${tx.quantity} • ${formatDate(tx.timestamp)}
                                 </div>
