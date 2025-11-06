@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Xuất Nhập Hàng</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2481cc;
+            --secondary-color: #5bc0de;
+            --success-color: #5cb85c;
+            --danger-color: #d9534f;
+            --warning-color: #f0ad4e;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --border-color: #ddd;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            overflow-x: auto;
+            background: white;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 80px;
+            z-index: 99;
+            box-shadow: var(--shadow);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-tabs::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .nav-tabs::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: white;
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-tab:hover {
+            background: var(--light-color);
+        }
+
+        .nav-tab.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary-color);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: scaleX(0);
+            }
+            to {
+                transform: scaleX(1);
+            }
+        }
+
+        /* Container */
+        .container {
+            padding: 20px;
+            max-width: 100%;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--dark-color);
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 10px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark-color);
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(36, 129, 204, 0.1);
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e6ba8;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            animation: bounceIn 0.5s ease-out;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Table */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 15px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .table th {
+            background: var(--light-color);
+            font-weight: 600;
+            color: var(--dark-color);
+            position: sticky;
+            top: 0;
+        }
+
+        .table tr:hover {
+            background: var(--light-color);
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .badge-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .badge-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid var(--light-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            animation: slideInDown 0.3s ease-out;
+            display: none;
+        }
+
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: var(--light-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        /* Charts Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        /* Quick Action Buttons */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .quick-action-btn {
+            background: white;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .quick-action-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .quick-action-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .nav-tab {
+                min-width: 100px;
+                padding: 12px 8px;
+                font-size: 12px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .table th,
+            .table td {
+                padding: 8px;
+                font-size: 12px;
+            }
+        }
+
+        /* Page Selection Pills */
+        .page-pills {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .page-pill {
+            padding: 8px 20px;
+            border: 2px solid var(--primary-color);
+            border-radius: 20px;
+            background: white;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .page-pill:hover,
+        .page-pill.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Export Buttons */
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>📦 Quản Lý Xuất Nhập Hàng</h1>
+        <div class="subtitle">RR88 • XX88 • MM88</div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="dashboard">🏠 Dashboard</button>
+        <button class="nav-tab" data-tab="import">📥 Nhập Hàng</button>
+        <button class="nav-tab" data-tab="export">📤 Xuất Hàng</button>
+        <button class="nav-tab" data-tab="inventory">📊 Tồn Kho</button>
+        <button class="nav-tab" data-tab="history">📜 Lịch Sử</button>
+        <button class="nav-tab" data-tab="products">🏷️ Sản Phẩm</button>
+    </div>
+
+    <!-- Alert Messages -->
+    <div id="alertContainer"></div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalProducts">0</div>
+                    <div class="stat-label">Sản Phẩm</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalImports">0</div>
+                    <div class="stat-label">Lượt Nhập</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalExports">0</div>
+                    <div class="stat-label">Lượt Xuất</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalInventory">0</div>
+                    <div class="stat-label">Tổng Tồn</div>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <div class="quick-action-btn" onclick="switchTab('import')">
+                    <div class="quick-action-icon">📥</div>
+                    <div>Nhập Hàng</div>
+                </div>
+                <div class="quick-action-btn" onclick="switchTab('export')">
+                    <div class="quick-action-icon">📤</div>
+                    <div>Xuất Hàng</div>
+                </div>
+                <div class="quick-action-btn" onclick="switchTab('inventory')">
+                    <div class="quick-action-icon">📊</div>
+                    <div>Xem Tồn Kho</div>
+                </div>
+                <div class="quick-action-btn" onclick="switchTab('products')">
+                    <div class="quick-action-icon">🏷️</div>
+                    <div>Quản Lý SP</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">📈 Thống Kê Theo Trang</div>
+                <div class="page-pills">
+                    <div class="page-pill active" onclick="filterDashboard('all')">Tất Cả</div>
+                    <div class="page-pill" onclick="filterDashboard('RR88')">RR88</div>
+                    <div class="page-pill" onclick="filterDashboard('XX88')">XX88</div>
+                    <div class="page-pill" onclick="filterDashboard('MM88')">MM88</div>
+                </div>
+                <div id="dashboardStats"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">🕐 Hoạt Động Gần Đây</div>
+                <div id="recentActivities"></div>
+            </div>
+        </div>
+
+        <!-- Import Tab -->
+        <div id="import" class="tab-content">
+            <div class="card">
+                <div class="card-header">📥 Nhập Hàng Mới</div>
+                <form id="importForm">
+                    <div class="form-group">
+                        <label class="form-label">Chọn Trang *</label>
+                        <select class="form-control" id="importPage" required>
+                            <option value="">-- Chọn Trang --</option>
+                            <option value="RR88">RR88</option>
+                            <option value="XX88">XX88</option>
+                            <option value="MM88">MM88</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sản Phẩm *</label>
+                        <select class="form-control" id="importProduct" required>
+                            <option value="">-- Chọn Sản Phẩm --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Số Lượng *</label>
+                        <input type="number" class="form-control" id="importQuantity" min="1" required placeholder="Nhập số lượng">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nhà Cung Cấp</label>
+                        <input type="text" class="form-control" id="importSupplier" placeholder="Tên nhà cung cấp">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ghi Chú</label>
+                        <textarea class="form-control" id="importNote" rows="3" placeholder="Ghi chú thêm..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-block">✅ Xác Nhận Nhập Hàng</button>
+                </form>
+            </div>
+
+            <div class="loading" id="importLoading">
+                <div class="spinner"></div>
+                <p>Đang xử lý...</p>
+            </div>
+        </div>
+
+        <!-- Export Tab -->
+        <div id="export" class="tab-content">
+            <div class="card">
+                <div class="card-header">📤 Xuất Hàng</div>
+                <form id="exportForm">
+                    <div class="form-group">
+                        <label class="form-label">Chọn Trang *</label>
+                        <select class="form-control" id="exportPage" required>
+                            <option value="">-- Chọn Trang --</option>
+                            <option value="RR88">RR88</option>
+                            <option value="XX88">XX88</option>
+                            <option value="MM88">MM88</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sản Phẩm *</label>
+                        <select class="form-control" id="exportProduct" required>
+                            <option value="">-- Chọn Sản Phẩm --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Số Lượng *</label>
+                        <input type="number" class="form-control" id="exportQuantity" min="1" required placeholder="Nhập số lượng">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Khách Hàng</label>
+                        <input type="text" class="form-control" id="exportCustomer" placeholder="Tên khách hàng">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ghi Chú</label>
+                        <textarea class="form-control" id="exportNote" rows="3" placeholder="Ghi chú thêm..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger btn-block">✅ Xác Nhận Xuất Hàng</button>
+                </form>
+            </div>
+
+            <div class="loading" id="exportLoading">
+                <div class="spinner"></div>
+                <p>Đang xử lý...</p>
+            </div>
+        </div>
+
+        <!-- Inventory Tab -->
+        <div id="inventory" class="tab-content">
+            <div class="card">
+                <div class="card-header">📊 Tồn Kho</div>
+                <div class="filter-section">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label class="form-label">Lọc theo Trang</label>
+                            <select class="form-control" id="inventoryPageFilter" onchange="loadInventory()">
+                                <option value="">Tất Cả</option>
+                                <option value="RR88">RR88</option>
+                                <option value="XX88">XX88</option>
+                                <option value="MM88">MM88</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tìm Sản Phẩm</label>
+                            <input type="text" class="form-control" id="inventorySearch" placeholder="Nhập tên sản phẩm..." oninput="loadInventory()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>SKU</th>
+                                <th>Trang</th>
+                                <th>Tồn Kho</th>
+                                <th>Trạng Thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <tr>
+                                <td colspan="5" class="empty-state">
+                                    <div class="empty-state-icon">📦</div>
+                                    <div>Chưa có dữ liệu tồn kho</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="export-buttons">
+                    <button class="btn btn-primary btn-sm" onclick="exportInventory('excel')">📊 Xuất Excel</button>
+                    <button class="btn btn-primary btn-sm" onclick="exportInventory('csv')">📄 Xuất CSV</button>
+                </div>
+            </div>
+
+            <div class="loading" id="inventoryLoading">
+                <div class="spinner"></div>
+                <p>Đang tải...</p>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history" class="tab-content">
+            <div class="card">
+                <div class="card-header">📜 Lịch Sử Giao Dịch</div>
+                <div class="filter-section">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label class="form-label">Loại Giao Dịch</label>
+                            <select class="form-control" id="historyTypeFilter" onchange="loadHistory()">
+                                <option value="">Tất Cả</option>
+                                <option value="import">Nhập Hàng</option>
+                                <option value="export">Xuất Hàng</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Trang</label>
+                            <select class="form-control" id="historyPageFilter" onchange="loadHistory()">
+                                <option value="">Tất Cả</option>
+                                <option value="RR88">RR88</option>
+                                <option value="XX88">XX88</option>
+                                <option value="MM88">MM88</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Từ Ngày</label>
+                            <input type="date" class="form-control" id="historyDateFrom" onchange="loadHistory()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Đến Ngày</label>
+                            <input type="date" class="form-control" id="historyDateTo" onchange="loadHistory()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Ngày</th>
+                                <th>Loại</th>
+                                <th>Sản Phẩm</th>
+                                <th>Trang</th>
+                                <th>Số Lượng</th>
+                                <th>Ghi Chú</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <div class="empty-state-icon">📜</div>
+                                    <div>Chưa có lịch sử giao dịch</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="export-buttons">
+                    <button class="btn btn-primary btn-sm" onclick="exportHistory('excel')">📊 Xuất Excel</button>
+                    <button class="btn btn-primary btn-sm" onclick="exportHistory('pdf')">📄 Xuất PDF</button>
+                </div>
+            </div>
+
+            <div class="loading" id="historyLoading">
+                <div class="spinner"></div>
+                <p>Đang tải...</p>
+            </div>
+        </div>
+
+        <!-- Products Tab -->
+        <div id="products" class="tab-content">
+            <div class="card">
+                <div class="card-header">🏷️ Thêm Sản Phẩm Mới</div>
+                <form id="productForm">
+                    <div class="form-group">
+                        <label class="form-label">Tên Sản Phẩm *</label>
+                        <input type="text" class="form-control" id="productName" required placeholder="Nhập tên sản phẩm">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mã SKU *</label>
+                        <input type="text" class="form-control" id="productSKU" required placeholder="VD: SP001">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Danh Mục</label>
+                        <input type="text" class="form-control" id="productCategory" placeholder="VD: Điện tử, Thời trang...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Giá</label>
+                        <input type="number" class="form-control" id="productPrice" min="0" step="1000" placeholder="Giá sản phẩm">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mô Tả</label>
+                        <textarea class="form-control" id="productDescription" rows="3" placeholder="Mô tả sản phẩm..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">➕ Thêm Sản Phẩm</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">📦 Danh Sách Sản Phẩm</div>
+                <div class="form-group">
+                    <input type="text" class="form-control" id="productSearch" placeholder="🔍 Tìm kiếm sản phẩm..." oninput="loadProducts()">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Tên</th>
+                                <th>SKU</th>
+                                <th>Danh Mục</th>
+                                <th>Giá</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr>
+                                <td colspan="5" class="empty-state">
+                                    <div class="empty-state-icon">🏷️</div>
+                                    <div>Chưa có sản phẩm nào</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="loading" id="productsLoading">
+                <div class="spinner"></div>
+                <p>Đang xử lý...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - API tự động từ n8n origin
+        const CONFIG = {
+            N8N_WEBHOOK_URL: window.location.origin + '/webhook/api',
+        };
+
+        // Initialize Telegram WebApp
+        let tg = window.Telegram?.WebApp;
+        
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            tg.MainButton.hide();
+        }
+
+        // Global State
+        const AppState = {
+            products: [],
+            transactions: [],
+            inventory: [],
+            currentTab: 'dashboard',
+            currentPage: 'all'
+        };
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+            loadAllData();
+        });
+
+        function initializeApp() {
+            console.log('🚀 Initializing App...');
+            
+            // Check Telegram WebApp
+            if (!tg) {
+                console.warn('⚠️ Not running in Telegram WebApp');
+                showAlert('Ứng dụng hoạt động tốt nhất trong Telegram', 'info');
+            } else {
+                console.log('✅ Telegram WebApp initialized');
+            }
+        }
+
+        function setupEventListeners() {
+            // Tab Navigation
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.dataset.tab;
+                    switchTab(tabName);
+                });
+            });
+
+            // Forms
+            document.getElementById('importForm').addEventListener('submit', handleImport);
+            document.getElementById('exportForm').addEventListener('submit', handleExport);
+            document.getElementById('productForm').addEventListener('submit', handleAddProduct);
+
+            // Load products for dropdowns
+            loadProductsDropdown();
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+
+            AppState.currentTab = tabName;
+
+            // Load data for specific tabs
+            if (tabName === 'inventory') loadInventory();
+            if (tabName === 'history') loadHistory();
+            if (tabName === 'products') loadProducts();
+            if (tabName === 'dashboard') loadDashboard();
+        }
+
+        // API Functions
+        async function apiCall(action, data) {
+            try {
+                const payload = {
+                    action: action,
+                    data: data,
+                    timestamp: new Date().toISOString(),
+                    user: tg?.initDataUnsafe?.user || { id: 'demo', first_name: 'Demo User' }
+                };
+
+                console.log('📡 API Call:', action, payload);
+
+                const response = await fetch(CONFIG.N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ API Response:', result);
+                return result;
+
+            } catch (error) {
+                console.error('❌ API Error:', error);
+                
+                // Demo mode fallback
+                console.log('🔄 Using demo mode...');
+                return handleDemoMode(action, data);
+            }
+        }
+
+        function handleDemoMode(action, data) {
+            // Simulate API responses for demo
+            switch(action) {
+                case 'addProduct':
+                    const product = { id: Date.now(), ...data, createdAt: new Date().toISOString() };
+                    AppState.products.push(product);
+                    return { success: true, data: product };
+                
+                case 'getProducts':
+                    return { success: true, data: AppState.products };
+                
+                case 'import':
+                    const importTx = { 
+                        id: Date.now(), 
+                        type: 'import', 
+                        ...data, 
+                        timestamp: new Date().toISOString() 
+                    };
+                    AppState.transactions.push(importTx);
+                    updateInventory(data.product_id, data.page, data.quantity, 'add');
+                    return { success: true, data: importTx };
+                
+                case 'export':
+                    const exportTx = { 
+                        id: Date.now(), 
+                        type: 'export', 
+                        ...data, 
+                        timestamp: new Date().toISOString() 
+                    };
+                    AppState.transactions.push(exportTx);
+                    updateInventory(data.product_id, data.page, data.quantity, 'subtract');
+                    return { success: true, data: exportTx };
+                
+                case 'getInventory':
+                    return { success: true, data: AppState.inventory };
+                
+                case 'getTransactions':
+                    return { success: true, data: AppState.transactions };
+                
+                default:
+                    return { success: true, data: [] };
+            }
+        }
+
+        function updateInventory(productId, page, quantity, operation) {
+            const key = `${productId}_${page}`;
+            const existing = AppState.inventory.find(inv => 
+                inv.product_id === productId && inv.page === page
+            );
+
+            if (existing) {
+                if (operation === 'add') {
+                    existing.quantity += quantity;
+                } else {
+                    existing.quantity -= quantity;
+                }
+            } else if (operation === 'add') {
+                AppState.inventory.push({
+                    product_id: productId,
+                    page: page,
+                    quantity: quantity
+                });
+            }
+        }
+
+        // Import Handler
+        async function handleImport(e) {
+            e.preventDefault();
+            
+            const page = document.getElementById('importPage').value;
+            const productId = document.getElementById('importProduct').value;
+            const quantity = parseInt(document.getElementById('importQuantity').value);
+            const supplier = document.getElementById('importSupplier').value;
+            const note = document.getElementById('importNote').value;
+
+            if (!page || !productId || !quantity) {
+                showAlert('Vui lòng điền đầy đủ thông tin bắt buộc', 'danger');
+                return;
+            }
+
+            showLoading('importLoading', true);
+
+            try {
+                const result = await apiCall('import', {
+                    page,
+                    product_id: productId,
+                    quantity,
+                    supplier,
+                    note
+                });
+
+                if (result.success) {
+                    showAlert('✅ Nhập hàng thành công!', 'success');
+                    document.getElementById('importForm').reset();
+                    loadAllData();
+                } else {
+                    throw new Error(result.message || 'Nhập hàng thất bại');
+                }
+            } catch (error) {
+                showAlert('❌ Lỗi: ' + error.message, 'danger');
+            } finally {
+                showLoading('importLoading', false);
+            }
+        }
+
+        // Export Handler
+        async function handleExport(e) {
+            e.preventDefault();
+            
+            const page = document.getElementById('exportPage').value;
+            const productId = document.getElementById('exportProduct').value;
+            const quantity = parseInt(document.getElementById('exportQuantity').value);
+            const customer = document.getElementById('exportCustomer').value;
+            const note = document.getElementById('exportNote').value;
+
+            if (!page || !productId || !quantity) {
+                showAlert('Vui lòng điền đầy đủ thông tin bắt buộc', 'danger');
+                return;
+            }
+
+            // Check inventory
+            const inventory = AppState.inventory.find(inv => 
+                inv.product_id === productId && inv.page === page
+            );
+
+            if (!inventory || inventory.quantity < quantity) {
+                showAlert('❌ Không đủ hàng trong kho!', 'danger');
+                return;
+            }
+
+            showLoading('exportLoading', true);
+
+            try {
+                const result = await apiCall('export', {
+                    page,
+                    product_id: productId,
+                    quantity,
+                    customer,
+                    note
+                });
+
+                if (result.success) {
+                    showAlert('✅ Xuất hàng thành công!', 'success');
+                    document.getElementById('exportForm').reset();
+                    loadAllData();
+                } else {
+                    throw new Error(result.message || 'Xuất hàng thất bại');
+                }
+            } catch (error) {
+                showAlert('❌ Lỗi: ' + error.message, 'danger');
+            } finally {
+                showLoading('exportLoading', false);
+            }
+        }
+
+        // Add Product Handler
+        async function handleAddProduct(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('productName').value;
+            const product_code = document.getElementById('productSKU').value;
+            const category = document.getElementById('productCategory').value;
+            const price = parseFloat(document.getElementById('productPrice').value) || 0;
+            const description = document.getElementById('productDescription').value;
+
+            if (!name || !product_code) {
+                showAlert('Vui lòng điền đầy đủ thông tin bắt buộc', 'danger');
+                return;
+            }
+
+            showLoading('productsLoading', true);
+
+            try {
+                const result = await apiCall('addProduct', {
+                    name,
+                    product_code,
+                    category,
+                    price,
+                    description
+                });
+
+                if (result.success) {
+                    showAlert('✅ Thêm sản phẩm thành công!', 'success');
+                    document.getElementById('productForm').reset();
+                    loadProducts();
+                    loadProductsDropdown();
+                } else {
+                    throw new Error(result.message || 'Thêm sản phẩm thất bại');
+                }
+            } catch (error) {
+                showAlert('❌ Lỗi: ' + error.message, 'danger');
+            } finally {
+                showLoading('productsLoading', false);
+            }
+        }
+
+        // Load Functions
+        async function loadAllData() {
+            await Promise.all([
+                loadProducts(),
+                loadInventory(),
+                loadHistory(),
+                loadDashboard()
+            ]);
+        }
+
+        async function loadProducts() {
+            showLoading('productsLoading', true);
+            
+            try {
+                const result = await apiCall('getProducts', {});
+                
+                if (result.success) {
+                    AppState.products = result.data;
+                    renderProducts();
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+            } finally {
+                showLoading('productsLoading', false);
+            }
+        }
+
+        async function loadProductsDropdown() {
+            try {
+                const result = await apiCall('getProducts', {});
+                
+                if (result.success && result.data) {
+                    const importSelect = document.getElementById('importProduct');
+                    const exportSelect = document.getElementById('exportProduct');
+                    
+                    const options = result.data.map(p => 
+                        `<option value="${p.id}">${p.name} (${p.product_code})</option>`
+                    ).join('');
+                    
+                    importSelect.innerHTML = '<option value="">-- Chọn Sản Phẩm --</option>' + options;
+                    exportSelect.innerHTML = '<option value="">-- Chọn Sản Phẩm --</option>' + options;
+                }
+            } catch (error) {
+                console.error('Error loading products dropdown:', error);
+            }
+        }
+
+        async function loadInventory() {
+            showLoading('inventoryLoading', true);
+            
+            try {
+                const result = await apiCall('getInventory', {});
+                
+                if (result.success) {
+                    AppState.inventory = result.data;
+                    renderInventory();
+                }
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+            } finally {
+                showLoading('inventoryLoading', false);
+            }
+        }
+
+        async function loadHistory() {
+            showLoading('historyLoading', true);
+            
+            try {
+                const result = await apiCall('getTransactions', {});
+                
+                if (result.success) {
+                    AppState.transactions = result.data;
+                    renderHistory();
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            } finally {
+                showLoading('historyLoading', false);
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                await loadAllData();
+                renderDashboard();
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        // Render Functions
+        function renderProducts() {
+            const tbody = document.getElementById('productsTableBody');
+            const search = document.getElementById('productSearch').value.toLowerCase();
+            
+            let filtered = AppState.products;
+            if (search) {
+                filtered = filtered.filter(p => 
+                    p.name.toLowerCase().includes(search) || 
+                    p.product_code.toLowerCase().includes(search)
+                );
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">🏷️</div>
+                            <div>Không tìm thấy sản phẩm</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(p => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td><span class="badge badge-primary">${p.product_code}</span></td>
+                    <td>${p.category || '-'}</td>
+                    <td>${formatCurrency(p.price)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderInventory() {
+            const tbody = document.getElementById('inventoryTableBody');
+            const pageFilter = document.getElementById('inventoryPageFilter').value;
+            const search = document.getElementById('inventorySearch').value.toLowerCase();
+            
+            let filtered = AppState.inventory;
+            
+            if (pageFilter) {
+                filtered = filtered.filter(inv => inv.page === pageFilter);
+            }
+            
+            if (search) {
+                filtered = filtered.filter(inv => {
+                    const product = AppState.products.find(p => p.id === inv.product_id);
+                    return product && product.name.toLowerCase().includes(search);
+                });
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">📦</div>
+                            <div>Không có dữ liệu tồn kho</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(inv => {
+                const product = AppState.products.find(p => p.id === inv.product_id);
+                const status = inv.quantity > 10 ? 'success' : inv.quantity > 0 ? 'warning' : 'danger';
+                const statusText = inv.quantity > 10 ? 'Đủ hàng' : inv.quantity > 0 ? 'Sắp hết' : 'Hết hàng';
+                
+                return `
+                    <tr>
+                        <td>${product?.name || 'N/A'}</td>
+                        <td><span class="badge badge-primary">${product?.product_code || 'N/A'}</span></td>
+                        <td><span class="badge badge-primary">${inv.page}</span></td>
+                        <td><strong>${inv.quantity}</strong></td>
+                        <td><span class="badge badge-${status}">${statusText}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            const typeFilter = document.getElementById('historyTypeFilter').value;
+            const pageFilter = document.getElementById('historyPageFilter').value;
+            const dateFrom = document.getElementById('historyDateFrom').value;
+            const dateTo = document.getElementById('historyDateTo').value;
+            
+            let filtered = AppState.transactions;
+            
+            if (typeFilter) {
+                filtered = filtered.filter(tx => tx.type === typeFilter);
+            }
+            
+            if (pageFilter) {
+                filtered = filtered.filter(tx => tx.page === pageFilter);
+            }
+            
+            if (dateFrom) {
+                filtered = filtered.filter(tx => new Date(tx.timestamp) >= new Date(dateFrom));
+            }
+            
+            if (dateTo) {
+                filtered = filtered.filter(tx => new Date(tx.timestamp) <= new Date(dateTo + 'T23:59:59'));
+            }
+
+            // Sort by date descending
+            filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">📜</div>
+                            <div>Không có lịch sử giao dịch</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(tx => {
+                const product = AppState.products.find(p => p.id === tx.product_id);
+                const typeBadge = tx.type === 'import' ? 'badge-success' : 'badge-danger';
+                const typeText = tx.type === 'import' ? '📥 Nhập' : '📤 Xuất';
+                
+                return `
+                    <tr>
+                        <td>${formatDate(tx.timestamp)}</td>
+                        <td><span class="badge ${typeBadge}">${typeText}</span></td>
+                        <td>${product?.name || 'N/A'}</td>
+                        <td><span class="badge badge-primary">${tx.page}</span></td>
+                        <td><strong>${tx.quantity}</strong></td>
+                        <td>${tx.note || tx.supplier || tx.customer || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderDashboard() {
+            // Update stats
+            document.getElementById('totalProducts').textContent = AppState.products.length;
+            document.getElementById('totalImports').textContent = 
+                AppState.transactions.filter(tx => tx.type === 'import').length;
+            document.getElementById('totalExports').textContent = 
+                AppState.transactions.filter(tx => tx.type === 'export').length;
+            document.getElementById('totalInventory').textContent = 
+                AppState.inventory.reduce((sum, inv) => sum + inv.quantity, 0);
+
+            // Render page stats
+            renderDashboardStats();
+
+            // Render recent activities
+            renderRecentActivities();
+        }
+
+        function renderDashboardStats() {
+            const container = document.getElementById('dashboardStats');
+            const pages = ['RR88', 'XX88', 'MM88'];
+            
+            const statsHTML = pages.map(page => {
+                const pageInventory = AppState.inventory
+                    .filter(inv => inv.page === page)
+                    .reduce((sum, inv) => sum + inv.quantity, 0);
+                
+                const pageImports = AppState.transactions
+                    .filter(tx => tx.type === 'import' && tx.page === page)
+                    .length;
+                
+                const pageExports = AppState.transactions
+                    .filter(tx => tx.type === 'export' && tx.page === page)
+                    .length;
+
+                return `
+                    <div class="card" style="margin-top: 15px;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 15px;">${page}</h3>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                            <div>
+                                <div style="font-size: 24px; font-weight: 700; color: var(--success-color);">${pageImports}</div>
+                                <div style="font-size: 12px; color: #666;">Nhập hàng</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 24px; font-weight: 700; color: var(--danger-color);">${pageExports}</div>
+                                <div style="font-size: 12px; color: #666;">Xuất hàng</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 24px; font-weight: 700; color: var(--primary-color);">${pageInventory}</div>
+                                <div style="font-size: 12px; color: #666;">Tồn kho</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = statsHTML;
+        }
+
+        function renderRecentActivities() {
+            const container = document.getElementById('recentActivities');
+            const recent = AppState.transactions
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .slice(0, 5);
+
+            if (recent.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div>Chưa có hoạt động nào</div></div>';
+                return;
+            }
+
+            const activitiesHTML = recent.map(tx => {
+                const product = AppState.products.find(p => p.id === tx.product_id);
+                const icon = tx.type === 'import' ? '📥' : '📤';
+                const color = tx.type === 'import' ? 'var(--success-color)' : 'var(--danger-color)';
+                const typeText = tx.type === 'import' ? 'Nhập' : 'Xuất';
+                
+                return `
+                    <div style="padding: 12px; border-left: 3px solid ${color}; background: var(--light-color); margin-bottom: 10px; border-radius: 5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${icon} ${typeText} hàng</strong> - ${product?.name || 'N/A'}
+                                <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                                    ${tx.page} • Số lượng: ${tx.quantity} • ${formatDate(tx.timestamp)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = activitiesHTML;
+        }
+
+        // Utility Functions
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} show`;
+            alert.textContent = message;
+            
+            container.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 300);
+            }, 3000);
+        }
+
+        function showLoading(elementId, show) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                if (show) {
+                    element.classList.add('show');
+                } else {
+                    element.classList.remove('show');
+                }
+            }
+        }
+
+        function formatCurrency(amount) {
+            if (!amount) return '0 ₫';
+            return new Intl.NumberFormat('vi-VN', { 
+                style: 'currency', 
+                currency: 'VND' 
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return new Intl.DateTimeFormat('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(date);
+        }
+
+        function filterDashboard(page) {
+            AppState.currentPage = page;
+            
+            document.querySelectorAll('.page-pill').forEach(pill => {
+                pill.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderDashboard();
+        }
+
+        async function deleteProduct(productId) {
+            if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+                return;
+            }
+
+            try {
+                const result = await apiCall('deleteProduct', { id: productId });
+                
+                if (result.success) {
+                    showAlert('✅ Xóa sản phẩm thành công!', 'success');
+                    AppState.products = AppState.products.filter(p => p.id !== productId);
+                    renderProducts();
+                    loadProductsDropdown();
+                } else {
+                    throw new Error('Không thể xóa sản phẩm');
+                }
+            } catch (error) {
+                showAlert('❌ Lỗi: ' + error.message, 'danger');
+            }
+        }
+
+        function exportInventory(format) {
+            showAlert(`Đang xuất dữ liệu định dạng ${format.toUpperCase()}...`, 'info');
+            // Implementation for exporting data
+            console.log('Export inventory as', format);
+        }
+
+        function exportHistory(format) {
+            showAlert(`Đang xuất lịch sử định dạng ${format.toUpperCase()}...`, 'info');
+            // Implementation for exporting history
+            console.log('Export history as', format);
+        }
+
+        // Initialize app when DOM is ready
+        console.log('✅ App script loaded');
+    </script>
+</body>
+</html>
