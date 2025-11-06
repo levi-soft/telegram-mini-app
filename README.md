@@ -1,447 +1,421 @@
 # 📦 Telegram Mini App - Quản Lý Xuất Nhập Hàng
 
-Ứng dụng Telegram Mini App chuyên nghiệp để quản lý xuất nhập hàng và tra cứu tồn kho cho 3 trang: **RR88**, **XX88**, và **MM88** với n8n backend. HTML được serve trực tiếp từ n8n.
+Ứng dụng Telegram Mini App để quản lý xuất nhập hàng cho 3 trang: **RR88**, **XX88**, **MM88**.
 
----
+**Model:** Nhập hàng về kho → Cấp phát cho nhân viên sử dụng
 
-## 🌟 Tính Năng Chính
+## ✨ Tính Năng Chính
 
-### 1. 🏠 Dashboard
-- Thống kê tổng quan realtime (sản phẩm, lượt nhập/xuất, tổng tồn)
-- Quick actions để truy cập nhanh
-- Thống kê chi tiết theo từng trang (RR88/XX88/MM88)
-- Hiển thị hoạt động gần đây
-- Animations mượt mà
+### 1. 📊 Dashboard - Tổng Quan Real-time
+- 4 metrics chính: Tổng nhập về, tổng cấp phát, tồn kho, số sản phẩm
+- Hiển thị xuất nhập gần đây với tên người thực hiện
+- Tự động cập nhật khi có thay đổi
 
-### 2. 📥 Quản Lý Nhập Hàng
-- Form nhập hàng với validation
-- Chọn trang đích (RR88/XX88/MM88)
-- Lưu thông tin nhà cung cấp
-- Tự động cập nhật tồn kho
-- Error handling đầy đủ
+### 2. 📥 Nhập Hàng Về Kho
+- Form đơn giản, chọn sản phẩm từ dropdown
+- Nhập số lượng nhận về
+- Thêm ghi chú (optional)
+- **Tự động ghi nhận tên người nhập** (first_name từ Telegram)
+- Validation đầy đủ
+- Tồn kho tự động tăng
 
-### 3. 📤 Quản Lý Xuất Hàng
-- Form xuất hàng
-- Kiểm tra tồn kho tự động
-- Warning khi không đủ hàng
-- Lưu thông tin khách hàng
-- Auto-deduct inventory
+### 3. 📤 Cấp Phát Cho Nhân Viên
+- Chọn sản phẩm cần cấp
+- Nhập số lượng cấp phát
+- **Kiểm tra tồn kho** trước khi cấp
+- Cảnh báo nếu không đủ hàng
+- **Tự động ghi nhận tên người cấp** (first_name từ Telegram)
+- Ghi chú người nhận/mục đích
+- Tồn kho tự động giảm
 
-### 4. 📊 Tra Cứu Tồn Kho
-- Realtime inventory tracking
-- Filter theo trang
-- Search sản phẩm
-- Status indicators (Đủ/Sắp hết/Hết hàng)
-- Export Excel/CSV
+### 4. 📋 Tra Cứu Tồn Kho
+- Hiển thị tồn kho real-time của tất cả sản phẩm
+- Tìm kiếm nhanh
+- Màu sắc trực quan: 🟢 Còn hàng / 🔴 Hết hàng
+- Table responsive
 
-### 5. 📜 Lịch Sử Giao Dịch
-- Complete transaction history
-- Filter theo type/page/date
-- Sort by latest
-- Export reports
+### 5. 🕐 Lịch Sử Xuất Nhập
+- Xem toàn bộ lịch sử nhập về và cấp phát
+- **Hiển thị tên người thực hiện** (first_name)
+- Lọc theo loại: Nhập về / Cấp phát
+- Tìm kiếm theo tên sản phẩm
+- Sắp xếp thời gian mới nhất
 
-### 6. 🏷️ Quản Lý Sản Phẩm
-- CRUD operations
-- Product info (name, SKU, category, price)
-- Search & filter
-- Delete products
+### 6. ⚙️ Quản Lý Danh Mục
+- Thêm sản phẩm mới
+- Sửa thông tin sản phẩm
+- Quản lý đơn vị tính
+- Thêm mô tả
 
----
+## 🎨 UI/UX Design
 
-## 🎨 UI/UX Features
+### Modern & Responsive
+- **Gradient Design**: Purple to Blue
+- **Smooth Animations**: SlideDown, FadeIn, SlideUp, Pulse
+- **Mobile-First**: Tối ưu cho điện thoại
+- **Color-Coded**: 🟢 Nhập về / 🔴 Cấp phát
+- **Visual Feedback**: Toast notifications, loading states
 
-- ✨ **Modern Design** - Gradient colors, shadows, cards
-- 🎭 **Smooth Animations** - 60fps animations
-- 📱 **Responsive** - Mobile-first approach
-- 🎯 **Intuitive Navigation** - Easy-to-use tabs
-- 🔔 **Alert System** - Toast notifications
-- ⚡ **Loading States** - Visual feedback
-- 🎨 **Color-Coded** - Status indicators
-
----
-
-## 🛠 Công Nghệ
-
-### Frontend
-- **HTML5** + **CSS3** + **JavaScript**
-- **Telegram WebApp API**
-- **Single File** - Portable, easy to deploy
-
-### Backend
-- **n8n** - Workflow automation
-- **n8n Data Tables** - Database (3 tables)
-- **Webhook** - REST API endpoint
-- **Code Nodes** - Business logic
-
----
-
-## 📊 Database Schema (Google Sheets)
-
-### Sheet: `products`
+### Color Scheme
 ```
-- id: Number (Auto-increment, Primary key)
-- product_name: String
-- product_code: String (Mã sản phẩm)
-- category: String
-- price: Number
-- description: String
-- created_at: String
-- created_by_user_id: String (Telegram user ID)
-- created_by_username: String (Username, tự động từ Telegram)
+Primary: #667eea (Purple)
+Secondary: #764ba2 (Dark Purple)
+Success: #10b981 (Green) - Nhập về
+Danger: #ef4444 (Red) - Cấp phát
+Info: #3b82f6 (Blue)
 ```
 
-### Sheet: `transactions`
-```
-- id: Number (Auto-increment, Primary key)
-- type: String (import/export)
-- page: String (RR88/XX88/MM88)
-- product_id: Number (ID từ products table)
-- quantity: Number
-- supplier: String (cho import)
-- customer: String (cho export)
-- note: String
-- timestamp: String
-- user_id: String (Telegram user ID)
-- username: String (Username người xuất/nhập, tự động từ Telegram)
-```
+## 🏗️ Architecture
 
-### Sheet: `inventory`
+### Simple & Clean
+
 ```
-- id: Number (Auto-increment, Primary key)
-- product_id: Number (ID từ products table)
-- page: String (RR88/XX88/MM88)
-- quantity: Number
-- last_updated: String
+Telegram Mini App
+    ↓ HTTP
+n8n Webhook
+    ├─ Path "app"  → Serve HTML (Frontend)
+    └─ Path "api"  → API Endpoints (Backend)
+           ↓
+    n8n Data Tables
+    ├─ products
+    └─ transactions
 ```
 
-**Lưu ý:**
-- Cột `id` = row number (auto)
-- `username` tự động lấy từ Telegram WebApp API
-- Google Sheets dễ xem, edit, backup
+### Workflows
 
----
-
-## 🔌 API Endpoints
-
-### Webhook URLs
+**1. Frontend Workflow:**
 ```
-GET  https://your-n8n.com/webhook/app  → Serve HTML
-POST https://your-n8n.com/webhook/api  → API Actions
+Webhook (path: app) → HTML Node → Respond
 ```
 
-### Request Format (POST)
-```json
-{
-  "action": "action_name",
-  "data": { /* payload */ },
-  "timestamp": "ISO_timestamp",
-  "user": { /* user_info */ }
-}
+**2. API Workflow:**
+```
+Webhook (path: api) → Router → Data Tables → Respond
 ```
 
-### Available Actions
+### Data Storage
 
-| Action | Description |
-|--------|-------------|
-| `addProduct` | Thêm sản phẩm mới |
-| `getProducts` | Lấy danh sách sản phẩm |
-| `updateProduct` | **Cập nhật sản phẩm** (Update tên, giá, etc.) |
-| `deleteProduct` | Xóa sản phẩm |
-| `import` | Nhập hàng + cập nhật tồn kho + lưu username |
-| `export` | Xuất hàng + trừ tồn kho + lưu username |
-| `getInventory` | Lấy dữ liệu tồn kho |
-| `getTransactions` | Lấy lịch sử giao dịch |
+**n8n Data Tables** (không cần SQL setup):
+- `products` - Danh mục sản phẩm
+- `transactions` - Lịch sử xuất nhập
 
-### Response Format
-```json
-{
-  "success": true/false,
-  "data": { /* result */ },
-  "timestamp": "ISO_timestamp",
-  "message": "Success/Error message"
-}
+## 📊 Data Schema
+
+### products Table
+```
+id            Auto-increment
+name          Text (Tên sản phẩm)
+unit          Text (Đơn vị)
+description   Text (Mô tả)
+page          Text (RR88/XX88/MM88)
+created_at    Date (Auto)
 ```
 
----
-
-## 🚀 Quick Start
-
-### 1. Setup Data Tables
-Tạo 3 tables: `products`, `transactions`, `inventory`
-
-### 2. Create n8n Workflows
-- Workflow 1: HTML (GET)
-- Workflow 2: API (POST) với Data Table nodes
-
-### 3. Configure Telegram Bot
+### transactions Table
 ```
-@BotFather → /newapp
-Web App URL: https://your-n8n.com/webhook/app
+id            Auto-increment
+type          Text (nhap/xuat)
+product_id    Number
+quantity      Number
+note          Text
+page          Text (RR88/XX88/MM88)
+user          Text (First name từ Telegram - AUTO)
+timestamp     Date (Auto)
 ```
 
-### 4. Test & Deploy
-- Test HTML rendering (GET)
-- Test API calls (POST)
-- Test trong Telegram app
+## 🔧 Configuration
 
-**Chi tiết:** Xem [`SETUP_GUIDE.md`](SETUP_GUIDE.md)
+### Setup Config
 
----
+File [`XuatNhapHang.html`](XuatNhapHang.html:952):
 
-## 📖 Documentation
-
-- **[`SETUP_GUIDE.md`](SETUP_GUIDE.md)** - Hướng dẫn setup chi tiết từng bước
-  - Tạo Telegram bot
-  - Setup n8n Data Tables
-  - Cấu hình workflow thủ công
-  - Testing procedures
-  - Troubleshooting
-
-- **[`XuatNhapHang.html`](XuatNhapHang.html)** - Source code app
-  - Single-file application
-  - Complete features
-  - Auto-detect API from n8n origin
-
----
-
-## 🎯 Architecture
-
-### Flow Diagram
-```
-Telegram Bot
-    ↓
-[Open Web App]
-    ↓
-n8n Webhook (GET) → Serve HTML
-    ↓
-User Interaction
-    ↓
-JavaScript API Call (POST)
-    ↓
-n8n Webhook (POST) → Process Action
-    ↓
-Data Tables (CRUD)
-    ↓
-Return JSON Response
-    ↓
-Update UI
+```javascript
+const CONFIG = {
+    N8N_WEBHOOK_URL: 'https://your-n8n.app/webhook',
+    API_PATH: 'api',
+};
 ```
 
-### n8n Workflow Structure
-```
-Webhook
-  ↓
-Parse Request
-  ↓
-IF (Request Type)
-  ├─ [GET] → Respond HTML
-  └─ [POST] → Switch (Actions)
-               ├─ addProduct
-               ├─ getProducts
-               ├─ deleteProduct
-               ├─ import
-               ├─ export
-               ├─ getInventory
-               └─ getTransactions
-                     ↓
-                 Data Tables
-                     ↓
-                 Format Response
-                     ↓
-                 Respond JSON
+**Example:**
+```javascript
+const CONFIG = {
+    N8N_WEBHOOK_URL: 'https://n8n-demo.app.n8n.cloud/webhook',
+    API_PATH: 'api',
+};
 ```
 
----
+### Webhook Paths
 
-## 🔒 Security Features
+- **Frontend:** `https://your-n8n.app/webhook/app`
+- **API:** `https://your-n8n.app/webhook/api`
 
-1. ✅ **HTTPS Required** - Production deployment
-2. ✅ **Input Validation** - Client & server side
-3. ✅ **Error Handling** - Graceful failures
-4. ✅ **CORS Protection** - Configurable headers
-5. ✅ **User Tracking** - Audit trail
-6. ✅ **Inventory Validation** - Prevent overselling
-7. ✅ **Transaction Logging** - Complete history
+## 🚀 Deployment
 
----
+### Quick Setup
 
-## 📱 Features Highlights
+1. **Create Data Tables** in n8n UI
+2. **Create 2 Workflows:**
+   - Frontend (path: `app`)
+   - API (path: `api`)
+3. **Update config** in HTML
+4. **Setup Telegram Bot** with frontend URL
+5. **Done!** 🎉
 
-### Demo Mode
-- Works offline without n8n connection
-- Client-side state management
-- Perfect for testing
+Chi tiết: [`SETUP_GUIDE.md`](SETUP_GUIDE.md)
 
-### Auto-Configuration
-- API URL auto-detected from n8n origin
-- No manual URL configuration needed
-- Portable between environments
+## 👤 User Tracking
 
-### Error Handling
-- Comprehensive try-catch blocks
-- User-friendly error messages
-- Console logging for debugging
+### Auto First Name
 
-### Performance
-- 60fps animations
-- Optimized rendering
-- Fast API responses
+App **tự động** lấy first_name từ Telegram:
 
----
+```javascript
+// Telegram WebApp API
+const user = tg.initDataUnsafe?.user;
+currentUser = user.first_name; // "Nguyễn Văn A"
+```
 
-## 💡 Use Cases
+**Benefits:**
+- ✅ Không cần điền thủ công
+- ✅ Luôn chính xác
+- ✅ Tracking rõ ràng ai nhập/cấp
+- ✅ Hiển thị trong lịch sử
 
-### 1. Warehouse Management
-Track stock across 3 locations (RR88/XX88/MM88)
+**Example:**
+```
+📥 Bàn phím cơ - Nhập về
+SL: 50 | 🕐 14:30 | 👤 Nguyễn Văn A
+📝 Nhập batch #001
+```
 
-### 2. Multi-Store Inventory
-Separate inventory per store with transfer tracking
+## 🔒 Security
 
-### 3. Supply Chain Tracking
-Supplier management, customer orders, analytics
+### Built-in
+- ✅ Telegram authentication
+- ✅ Input validation
+- ✅ Inventory checking
+- ✅ User tracking
+- ✅ Page isolation (RR88/XX88/MM88)
 
----
+### Recommended
+- 🔐 HTTPS only (Telegram requirement)
+- 🔐 Rate limiting in n8n
+- 🔐 Regular backups
 
-## 🔍 Troubleshooting
+## 📱 Telegram Integration
 
-### HTML không hiển thị
-- Check webhook URL có HTTPS
-- Verify GET request handling
-- Check Content-Type header
+### WebApp SDK
 
-### API không response
-- Verify webhook path
-- Check CORS settings
-- Confirm Data Tables exist
+```javascript
+let tg = window.Telegram?.WebApp;
+tg.ready();
+tg.expand();
 
-### Demo Mode luôn active
-- Check browser console (F12)
-- Verify API URL trong Network tab
-- Test API với curl/Postman
+// Get user info
+const user = tg.initDataUnsafe?.user;
+console.log(user.first_name); // Auto-captured
+console.log(user.username);
+console.log(user.id);
+```
 
-**Chi tiết:** Xem [`SETUP_GUIDE.md#troubleshooting`](SETUP_GUIDE.md)
+## 🧪 Testing
 
----
+### Test Scenarios
 
-## 📊 Stats
-
-- **Code:** ~1,700 lines (HTML/CSS/JS)
-- **Features:** 6 main features
-- **API Endpoints:** 7 actions
-- **Database Tables:** 3 tables
-- **UI Components:** 20+ components
-- **Animations:** 50+ smooth animations
-
----
-
-## 🎓 Tech Stack Details
-
-### Frontend
-- Vanilla JavaScript (No frameworks)
-- CSS3 with variables
-- Flexbox & Grid layouts
-- Fetch API for requests
-- LocalStorage for demo mode
-
-### Backend (n8n)
-- Webhook trigger
-- Code nodes (JavaScript)
-- Data Table nodes
-- IF/Switch nodes for routing
-- Response nodes
-
----
-
-## 🚀 Deployment Options
-
-### n8n Cloud (Recommended)
-- Easy setup
-- HTTPS included
-- Auto-scaling
-- Built-in monitoring
-
-### Self-Hosted n8n
-- Docker
-- npm
-- Full control
-- Custom domain
-
----
+1. ✅ **Thêm sản phẩm** → Check Data Table
+2. ✅ **Nhập về 100** → Tồn kho +100, user = your first_name
+3. ✅ **Cấp phát 20** → Tồn kho -20, user = your first_name
+4. ✅ **Cấp phát > tồn kho** → Error warning
+5. ✅ **Xem lịch sử** → Show first_name
+6. ✅ **Switch pages** → Separate data
+7. ✅ **Search & filter** → Works correctly
 
 ## 📈 Performance
 
-- ⚡ First Load: < 2s
-- 🎨 Animations: 60fps
-- 📱 Mobile: 100% optimized
-- ♿ Accessibility: WCAG 2.1 AA
-- 🔒 Security: Production-ready
+- **Load Time:** < 2s
+- **API Response:** < 500ms
+- **UI Update:** Instant
+- **Animations:** 60fps
 
----
+## 🐛 Error Handling
 
-## 🤝 Contributing
+### Frontend
+- Try-catch all async operations
+- User-friendly messages
+- Toast notifications
+- Loading states
 
-Contributions welcome! Please:
-1. Fork repository
-2. Create feature branch
-3. Commit changes
-4. Create Pull Request
+### Backend
+- Data validation
+- Inventory checks
+- Error responses
+- Execution logging
 
----
+## 💡 Use Cases
 
-## 📄 License
+### Case 1: IT Manager Nhập Hàng Mới
+```
+1. Nhận 50 bàn phím từ vendor
+2. Mở app → Tab Nhập Hàng
+3. Chọn "Bàn phím cơ"
+4. Số lượng: 50
+5. Note: "Batch #123 từ Dell"
+6. Submit
+→ Tồn kho +50
+→ History: "Nguyễn Văn A nhập 50 cái lúc 14:30"
+```
 
-MIT License - Free for personal and commercial use
+### Case 2: IT Staff Cấp Phát
+```
+1. Nhân viên mới cần bàn phím
+2. Mở app → Tab Cấp Phát
+3. Chọn "Bàn phím cơ" (tồn: 50)
+4. Số lượng: 1
+5. Note: "Cấp cho Trần Thị B - Phòng Sale"
+6. Submit
+→ Tồn kho -1 = 49
+→ History: "Nguyễn Văn A cấp phát 1 cái lúc 15:00"
+```
 
----
+### Case 3: Manager Review
+```
+1. Tab Dashboard → Xem tổng quan
+2. Tab Lịch Sử → Xem chi tiết
+3. Filter: Chỉ xem Cấp phát
+4. Search: "bàn phím"
+→ Biết ai nhận, khi nào, bao nhiêu
+```
 
-## 👨‍💻 Developer
+## 🔄 Data Flow
 
-Created with ❤️ by Kilo Code
+### Example: Nhập Về 100 Bàn Phím
 
----
+```
+1. User mở app trên Telegram
+2. Telegram tự động gửi user.first_name
+3. App lưu currentUser = "Nguyễn Văn A"
 
-## 📞 Support
+4. User chọn "Nhập Hàng"
+5. Chọn product: Bàn phím cơ (id: 1)
+6. Nhập quantity: 100
+7. Note: "Batch #001"
+8. Click Submit
 
-- **Setup Issues:** Check [`SETUP_GUIDE.md`](SETUP_GUIDE.md)
-- **Bug Reports:** Open GitHub issue
-- **Questions:** n8n community forum
+9. Frontend gọi API:
+   POST /webhook/api?endpoint=transactions
+   {
+     type: "nhap",
+     product_id: 1,
+     quantity: 100,
+     note: "Batch #001",
+     page: "RR88",
+     user: "Nguyễn Văn A"  ← Auto!
+   }
 
----
+10. n8n Workflow:
+    - Validate data
+    - Insert to transactions table
+    - Return success
+
+11. Frontend:
+    - Show toast: "✅ Nhập hàng thành công!"
+    - Reload data
+    - Update tồn kho: +100
+    - Update dashboard
+    - Show in history with first_name
+```
 
 ## 🎯 Roadmap
 
-### Planned Features
-- [ ] Multi-language support
-- [ ] Advanced charts/analytics
-- [ ] PDF exports with templates
-- [ ] QR code scanning
-- [ ] Email notifications
+### Phase 1 ✅ (Current)
+- ✅ 6 core features
+- ✅ n8n Data Tables
+- ✅ Auto first_name tracking
+- ✅ Multi-page support
+- ✅ Modern UI
+
+### Phase 2 (Next)
+- [ ] Export to Excel
+- [ ] Print labels
+- [ ] Barcode scanning
+- [ ] Push notifications
+- [ ] Advanced charts
+
+### Phase 3 (Future)
 - [ ] Role-based access
-- [ ] Mobile native app
+- [ ] Approval workflow
+- [ ] Low stock alerts
+- [ ] QR tracking
+- [ ] Mobile app (native)
 
-### Optimizations
-- [ ] Service worker (PWA)
-- [ ] Offline sync
-- [ ] WebSocket realtime updates
-- [ ] Image optimization
+## 👨‍💻 Tech Stack
+
+- **Frontend:** HTML5, CSS3, JavaScript ES6+
+- **Backend:** n8n Workflow Automation
+- **Database:** n8n Data Tables
+- **Platform:** Telegram Mini App
+- **Design:** Custom CSS Gradients
+
+## 📞 Support
+
+### Resources
+- [`SETUP_GUIDE.md`](SETUP_GUIDE.md) - Detailed setup
+- [`XuatNhapHang.html`](XuatNhapHang.html) - Source code
+
+### Debug
+1. Check n8n workflow executions
+2. View Data Tables in n8n UI
+3. Browser console (F12)
+4. Test API with curl
+
+## 🌟 Key Features Summary
+
+| Feature | Status | Auto-Track User |
+|---------|--------|-----------------|
+| Multi-Page (RR88/XX88/MM88) | ✅ | - |
+| Dashboard Stats | ✅ | - |
+| Nhập Về | ✅ | ✅ First name |
+| Cấp Phát | ✅ | ✅ First name |
+| Tồn Kho Real-time | ✅ | - |
+| Lịch Sử | ✅ | ✅ Show first name |
+| Danh Mục CRUD | ✅ | - |
+| Search & Filter | ✅ | - |
+| Responsive Design | ✅ | - |
+| n8n Data Tables | ✅ | - |
+
+## 📸 UI Preview
+
+### Dashboard
+```
+┌─────────────────────────────────┐
+│  📦 Quản Lý Xuất Nhập Hàng     │
+│  [RR88] [XX88] [MM88]          │
+├─────────────────────────────────┤
+│ 📥 Tổng Nhập │ 📤 Tổng Xuất    │
+│    500       │     200         │
+├──────────────┼─────────────────┤
+│ 📦 Tồn Kho   │ 🏷️ Sản Phẩm   │
+│    300       │      15         │
+├─────────────────────────────────┤
+│ 📝 Xuất Nhập Gần Đây           │
+│                                 │
+│ 📥 Bàn phím cơ                 │
+│ SL: 50 | 👤 Nguyễn Văn A       │
+│ 📝 Batch #001                  │
+└─────────────────────────────────┘
+```
 
 ---
 
-## ✅ Requirements Met
+**Made with ❤️ for efficient inventory management**
 
-- ✅ Single HTML file
-- ✅ Modern UI với animations
-- ✅ 6 chức năng chính
-- ✅ n8n backend với Data Tables
-- ✅ Error handling đầy đủ
-- ✅ Responsive & production-ready
-- ✅ HTML serve từ n8n
-- ✅ Setup thủ công (không dùng workflow JSON)
-
----
-
-**Happy Coding! 🚀**
-
-**Version:** 1.0.0  
-**Status:** Production Ready  
+**Version:** 2.1.0  
 **Last Updated:** 2025-11-06
+
+### Changelog v2.1.0
+- ✅ Webhook paths: "app" & "api"
+- ✅ Bỏ SQL, dùng n8n Data Table UI
+- ✅ Auto first_name tracking từ Telegram
+- ✅ Hiển thị tên người trong lịch sử
+- ✅ Simplified setup (20-30 phút)
+- ✅ Production-ready
