@@ -902,8 +902,9 @@
         <!-- Products Tab -->
         <div id="products" class="tab-content">
             <div class="card">
-                <div class="card-header">🏷️ Thêm Sản Phẩm Mới</div>
+                <div class="card-header" id="productFormHeader">🏷️ Thêm Sản Phẩm Mới</div>
                 <form id="productForm">
+                    <input type="hidden" id="productId">
                     <div class="form-group">
                         <label class="form-label">Tên Sản Phẩm *</label>
                         <input type="text" class="form-control" id="productName" required placeholder="Nhập tên sản phẩm">
@@ -924,7 +925,10 @@
                         <label class="form-label">Mô Tả</label>
                         <textarea class="form-control" id="productDescription" rows="3" placeholder="Mô tả sản phẩm..."></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">➕ Thêm Sản Phẩm</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">➕ Thêm Sản Phẩm</button>
+                        <button type="button" class="btn btn-warning btn-block" id="cancelEditBtn" style="display: none;" onclick="cancelEdit()">✖️ Hủy</button>
+                    </div>
                 </form>
             </div>
 
@@ -967,7 +971,7 @@
     <script>
         // Configuration - API tự động từ n8n origin
         const CONFIG = {
-            N8N_WEBHOOK_URL: window.location.origin + '/webhook/xuatnhaphang-api',
+            N8N_WEBHOOK_URL: window.location.origin + '/webhook/api',
         };
 
         // Initialize Telegram WebApp
@@ -1086,32 +1090,52 @@
 
         function handleDemoMode(action, data) {
             // Simulate API responses for demo
+            const user = tg?.initDataUnsafe?.user || { id: 'demo', first_name: 'Demo', username: 'demo_user' };
+            
             switch(action) {
                 case 'addProduct':
-                    const product = { id: Date.now(), ...data, createdAt: new Date().toISOString() };
+                    const product = {
+                        id: Date.now(),
+                        ...data,
+                        created_at: new Date().toISOString(),
+                        created_by_user_id: user.id,
+                        created_by_username: user.username || user.first_name
+                    };
                     AppState.products.push(product);
                     return { success: true, data: product };
+                
+                case 'updateProduct':
+                    const index = AppState.products.findIndex(p => p.id == data.id);
+                    if (index !== -1) {
+                        AppState.products[index] = { ...AppState.products[index], ...data };
+                        return { success: true, data: AppState.products[index] };
+                    }
+                    return { success: false, message: 'Product not found' };
                 
                 case 'getProducts':
                     return { success: true, data: AppState.products };
                 
                 case 'import':
-                    const importTx = { 
-                        id: Date.now(), 
-                        type: 'import', 
-                        ...data, 
-                        timestamp: new Date().toISOString() 
+                    const importTx = {
+                        id: Date.now(),
+                        type: 'import',
+                        ...data,
+                        timestamp: new Date().toISOString(),
+                        user_id: user.id,
+                        username: user.username || user.first_name
                     };
                     AppState.transactions.push(importTx);
                     updateInventory(data.product_id, data.page, data.quantity, 'add');
                     return { success: true, data: importTx };
                 
                 case 'export':
-                    const exportTx = { 
-                        id: Date.now(), 
-                        type: 'export', 
-                        ...data, 
-                        timestamp: new Date().toISOString() 
+                    const exportTx = {
+                        id: Date.now(),
+                        type: 'export',
+                        ...data,
+                        timestamp: new Date().toISOString(),
+                        user_id: user.id,
+                        username: user.username || user.first_name
                     };
                     AppState.transactions.push(exportTx);
                     updateInventory(data.product_id, data.page, data.quantity, 'subtract');
@@ -1122,6 +1146,10 @@
                 
                 case 'getTransactions':
                     return { success: true, data: AppState.transactions };
+                
+                case 'deleteProduct':
+                    AppState.products = AppState.products.filter(p => p.id != data.id);
+                    return { success: true, data: {} };
                 
                 default:
                     return { success: true, data: [] };
@@ -1239,10 +1267,11 @@
             }
         }
 
-        // Add Product Handler
+        // Add/Edit Product Handler
         async function handleAddProduct(e) {
             e.preventDefault();
             
+            const productId = document.getElementById('productId').value;
             const product_name = document.getElementById('productName').value;
             const product_code = document.getElementById('productSKU').value;
             const category = document.getElementById('productCategory').value;
@@ -1257,27 +1286,64 @@
             showLoading('productsLoading', true);
 
             try {
-                const result = await apiCall('addProduct', {
+                const action = productId ? 'updateProduct' : 'addProduct';
+                const data = {
                     product_name,
                     product_code,
                     category,
                     price,
                     description
-                });
+                };
+
+                if (productId) {
+                    data.id = productId;
+                }
+
+                const result = await apiCall(action, data);
 
                 if (result.success) {
-                    showAlert('✅ Thêm sản phẩm thành công!', 'success');
-                    document.getElementById('productForm').reset();
+                    const message = productId ? '✅ Cập nhật sản phẩm thành công!' : '✅ Thêm sản phẩm thành công!';
+                    showAlert(message, 'success');
+                    cancelEdit();
                     loadProducts();
                     loadProductsDropdown();
                 } else {
-                    throw new Error(result.message || 'Thêm sản phẩm thất bại');
+                    throw new Error(result.message || 'Thao tác thất bại');
                 }
             } catch (error) {
                 showAlert('❌ Lỗi: ' + error.message, 'danger');
             } finally {
                 showLoading('productsLoading', false);
             }
+        }
+
+        // Edit Product
+        function editProduct(productId) {
+            const product = AppState.products.find(p => p.id == productId);
+            if (!product) return;
+
+            document.getElementById('productId').value = product.id;
+            document.getElementById('productName').value = product.product_name;
+            document.getElementById('productSKU').value = product.product_code;
+            document.getElementById('productCategory').value = product.category || '';
+            document.getElementById('productPrice').value = product.price || '';
+            document.getElementById('productDescription').value = product.description || '';
+
+            document.getElementById('productFormHeader').textContent = '✏️ Chỉnh Sửa Sản Phẩm';
+            document.getElementById('submitBtn').innerHTML = '💾 Cập Nhật';
+            document.getElementById('cancelEditBtn').style.display = 'block';
+
+            // Scroll to form
+            document.querySelector('#products .card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Cancel Edit
+        function cancelEdit() {
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            document.getElementById('productFormHeader').textContent = '🏷️ Thêm Sản Phẩm Mới';
+            document.getElementById('submitBtn').innerHTML = '➕ Thêm Sản Phẩm';
+            document.getElementById('cancelEditBtn').style.display = 'none';
         }
 
         // Load Functions
@@ -1402,6 +1468,7 @@
                     <td>${p.category || '-'}</td>
                     <td>${formatCurrency(p.price)}</td>
                     <td>
+                        <button class="btn btn-sm btn-primary" onclick="editProduct('${p.id}')">✏️</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p.id}')">🗑️</button>
                     </td>
                 </tr>

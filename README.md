@@ -79,50 +79,53 @@
 
 ### Table: `products`
 ```
-- id: Number (Auto-increment, Primary key - do Data Table tự sinh)
+- id: Number (Auto-increment, Primary key)
 - product_name: String
 - product_code: String (Mã sản phẩm)
 - category: String
 - price: Number
 - description: String
 - created_at: String
-- created_by: String (Telegram user ID)
-- created_by_username: String (Telegram username, tự động lấy)
+- created_by_user_id: String (Telegram user ID)
+- created_by_username: String (Username, tự động từ Telegram)
 ```
 
 ### Table: `transactions`
 ```
-- id: Number (Auto-increment, Primary key - do Data Table tự sinh)
+- id: Number (Auto-increment, Primary key)
 - type: String (import/export)
 - page: String (RR88/XX88/MM88)
 - product_id: Number (ID từ products table)
 - quantity: Number
-- supplier: String
-- customer: String
+- supplier: String (cho import)
+- customer: String (cho export)
 - note: String
 - timestamp: String
-- user_id: String
+- user_id: String (Telegram user ID)
+- username: String (Username người xuất/nhập, tự động từ Telegram)
 ```
 
 ### Table: `inventory`
 ```
-- id: Number (Auto-increment, Primary key - do Data Table tự sinh)
+- id: Number (Auto-increment, Primary key)
 - product_id: Number (ID từ products table)
 - page: String (RR88/XX88/MM88)
 - quantity: Number
 - last_updated: String
 ```
 
-**Lưu ý:** Cột `id` tự động được Data Table tạo, không cần định nghĩa thủ công.
+**Lưu ý:**
+- Cột `id` tự động, không cần tạo thủ công
+- `username` tự động lấy từ Telegram WebApp API (user.username hoặc user.first_name)
 
 ---
 
 ## 🔌 API Endpoints
 
-### Webhook URL
+### Webhook URLs
 ```
-GET  https://your-n8n.com/webhook/xuatnhaphang-api  → Serve HTML
-POST https://your-n8n.com/webhook/xuatnhaphang-api  → API Actions
+GET  https://your-n8n.com/webhook/app  → Serve HTML
+POST https://your-n8n.com/webhook/api  → API Actions
 ```
 
 ### Request Format (POST)
@@ -141,9 +144,10 @@ POST https://your-n8n.com/webhook/xuatnhaphang-api  → API Actions
 |--------|-------------|
 | `addProduct` | Thêm sản phẩm mới |
 | `getProducts` | Lấy danh sách sản phẩm |
+| `updateProduct` | **Cập nhật sản phẩm** (Update tên, giá, etc.) |
 | `deleteProduct` | Xóa sản phẩm |
-| `import` | Nhập hàng + cập nhật tồn kho |
-| `export` | Xuất hàng + trừ tồn kho |
+| `import` | Nhập hàng + cập nhật tồn kho + lưu username |
+| `export` | Xuất hàng + trừ tồn kho + lưu username |
 | `getInventory` | Lấy dữ liệu tồn kho |
 | `getTransactions` | Lấy lịch sử giao dịch |
 
@@ -175,7 +179,7 @@ Setup workflow với:
 ### 3. Configure Telegram Bot
 ```
 @BotFather → /newapp
-Web App URL: https://your-n8n.com/webhook/xuatnhaphang-api
+Web App URL: https://your-n8n.com/webhook/app
 ```
 
 ### 4. Test & Deploy

@@ -53,7 +53,7 @@ Vào **Settings** → **Data Tables** → **Create Data Table**
 | price | Number | ❌ | Giá (VND) |
 | description | String | ❌ | Mô tả |
 | created_at | String | ✅ | Thời gian tạo |
-| created_by | String | ❌ | User ID (Telegram) |
+| created_by_user_id | String | ❌ | User ID (Telegram) |
 | created_by_username | String | ❌ | Username (Telegram) |
 
 **Lưu ý:** Data Table tự động có cột `id` (auto-increment). Username tự động lấy từ Telegram WebApp API.
@@ -75,6 +75,7 @@ Vào **Settings** → **Data Tables** → **Create Data Table**
 | note | String | ❌ | Ghi chú |
 | timestamp | String | ✅ | Thời gian giao dịch |
 | user_id | String | ❌ | Telegram user ID |
+| username | String | ❌ | Telegram username |
 
 **Lưu ý:** Cột `id` tự động, cột `product_id` là số (ID từ products table).
 
@@ -103,7 +104,7 @@ Vào **Settings** → **Data Tables** → **Create Data Table**
 
 #### Node 1: Webhook
 - HTTP Method: `GET`
-- Path: `xuatnhaphang-app`
+- Path: `app`
 - Response Mode: `Using 'Respond to Webhook' Node`
 
 #### Node 2: HTML
@@ -121,7 +122,7 @@ Vào **Settings** → **Data Tables** → **Create Data Table**
 
 **✅ Workflow 1 hoàn thành!**
 
-**URL:** `https://your-n8n.com/webhook/xuatnhaphang-app`
+**URL:** `https://your-n8n.com/webhook/app`
 
 ---
 
@@ -131,7 +132,7 @@ Vào **Settings** → **Data Tables** → **Create Data Table**
 
 #### Node 1: Webhook
 - HTTP Method: `POST`
-- Path: `xuatnhaphang-api`
+- Path: `api`
 - Response Mode: `Using 'Respond to Webhook' Node`
 - Options → Allowed Origins: `*`
 
@@ -141,11 +142,12 @@ Vào **Settings** → **Data Tables** → **Create Data Table**
 **Rules:**
 1. `{{ $json.body.action }}` equals `addProduct` → Output 0
 2. `{{ $json.body.action }}` equals `getProducts` → Output 1
-3. `{{ $json.body.action }}` equals `deleteProduct` → Output 2
-4. `{{ $json.body.action }}` equals `import` → Output 3
-5. `{{ $json.body.action }}` equals `export` → Output 4
-6. `{{ $json.body.action }}` equals `getInventory` → Output 5
-7. `{{ $json.body.action }}` equals `getTransactions` → Output 6
+3. `{{ $json.body.action }}` equals `updateProduct` → Output 2
+4. `{{ $json.body.action }}` equals `deleteProduct` → Output 3
+5. `{{ $json.body.action }}` equals `import` → Output 4
+6. `{{ $json.body.action }}` equals `export` → Output 5
+7. `{{ $json.body.action }}` equals `getInventory` → Output 6
+8. `{{ $json.body.action }}` equals `getTransactions` → Output 7
 
 **Fallback Output:** unknown
 
@@ -167,7 +169,7 @@ return [{
     price: data.price || 0,
     description: data.description || '',
     created_at: timestamp,
-    created_by: user.id || 'unknown',
+    created_by_user_id: user.id || 'unknown',
     created_by_username: user.username || user.first_name || 'unknown'
   }
 }];
@@ -193,7 +195,36 @@ return [{
 
 ---
 
-#### Output 2: Delete Product
+#### Output 2: Update Product
+
+**Node: Code - Prepare Update**
+```javascript
+const data = $json.body.data;
+
+return [{
+  json: {
+    id: data.id,
+    product_name: data.product_name,
+    product_code: data.product_code,
+    category: data.category || '',
+    price: data.price || 0,
+    description: data.description || ''
+  }
+}];
+```
+
+**Node: Data Table - Update**
+- Table: `products`
+- Operation: `Update`
+- Filter Type: `Manual`
+- Matching Columns:
+  - Column: `id`
+  - Value: `{{ $json.id }}`
+- Update Fields: Map from $json
+
+---
+
+#### Output 3: Delete Product
 
 **Node: Data Table - Delete**
 - Table: `products`
@@ -205,7 +236,7 @@ return [{
 
 ---
 
-#### Output 3: Import (Nhập Hàng)
+#### Output 4: Import (Nhập Hàng)
 
 **Node 1: Code - Prepare Transaction**
 ```javascript
@@ -225,7 +256,8 @@ return [{
       customer: '',
       note: data.note || '',
       timestamp: timestamp,
-      user_id: user.id || 'unknown'
+      user_id: user.id || 'unknown',
+      username: user.username || user.first_name || 'unknown'
     },
     inventory_update: {
       product_id: data.product_id,
@@ -295,7 +327,7 @@ return [{
 
 ---
 
-#### Output 4: Export (Xuất Hàng)
+#### Output 5: Export (Xuất Hàng)
 
 **Tương tự Import, nhưng:**
 
@@ -328,7 +360,7 @@ return [{
 
 ---
 
-#### Output 5: Get Inventory
+#### Output 6: Get Inventory
 
 **Node: Data Table - Read All**
 - Table: `inventory`
@@ -337,7 +369,7 @@ return [{
 
 ---
 
-#### Output 6: Get Transactions
+#### Output 7: Get Transactions
 
 **Node: Data Table - Read All**
 - Table: `transactions`
@@ -347,15 +379,18 @@ return [{
 
 ---
 
-### Final Nodes (cho tất cả outputs)
+### Final Nodes - Format & Respond
 
-#### Node: Merge
-- Mode: `Append`
-- Merge tất cả outputs từ Switch
+**Khuyến nghị:** Tất cả 8 outputs từ Switch → kết nối đến **1 Code node** → **1 Respond node**
 
 #### Node: Code - Format Response
+
+**Kết nối:** Tất cả 8 outputs từ Switch → node này
+
 ```javascript
-const data = $input.all().map(item => item.json);
+// Mỗi execution chỉ chạy 1 path, nên $input.all() chỉ có data từ path đó
+const items = $input.all();
+const data = items.map(item => item.json);
 
 return [{
   json: {
@@ -379,13 +414,24 @@ return [{
 
 ---
 
+**💡 Note about Concurrent Users:**
+
+Khi nhiều người dùng cùng lúc, n8n tự động tạo **execution riêng biệt** cho mỗi request:
+- User A: Request → Execution 1 → Chạy path addProduct
+- User B: Request → Execution 2 → Chạy path import
+- User C: Request → Execution 3 → Chạy path export
+
+**Mỗi execution độc lập**, không ảnh hưởng lẫn nhau. Merge All hoàn toàn an toàn và hiệu quả.
+
+---
+
 ## 🔗 Bước 4: Cập Nhật HTML
 
 Mở file [`XuatNhapHang.html`](XuatNhapHang.html), tìm dòng 970:
 
 ```javascript
 const CONFIG = {
-    N8N_WEBHOOK_URL: window.location.origin + '/webhook/xuatnhaphang-api',
+    N8N_WEBHOOK_URL: window.location.origin + '/webhook/api',
 };
 ```
 
@@ -407,7 +453,7 @@ Trong Telegram chat với @BotFather:
 2. Title: "Quản Lý Xuất Nhập Hàng"
 3. Description: "Quản lý tồn kho RR88, XX88, MM88"
 4. Photo: Upload icon (640x640px - optional)
-5. **Web App URL:** `https://your-n8n.com/webhook/xuatnhaphang-app`
+5. **Web App URL:** `https://your-n8n.com/webhook/app`
 6. Short name: `xuatnhaphang`
 
 ✅ Done!
@@ -419,13 +465,13 @@ Trong Telegram chat với @BotFather:
 ### 6.1. Test HTML Rendering
 
 1. Mở browser
-2. Truy cập: `https://your-n8n.com/webhook/xuatnhaphang-app`
+2. Truy cập: `https://your-n8n.com/webhook/app`
 3. ✅ Verify: Hiển thị app HTML
 
 ### 6.2. Test API
 
 ```bash
-curl -X POST https://your-n8n.com/webhook/xuatnhaphang-api \
+curl -X POST https://your-n8n.com/webhook/api \
   -H "Content-Type: application/json" \
   -d '{
     "action": "getProducts",
@@ -481,11 +527,11 @@ curl -X POST https://your-n8n.com/webhook/xuatnhaphang-api \
 ### HTML không hiển thị
 - Check Workflow 1 đã activate
 - Verify HTML node có content
-- Test URL trong browser: `https://your-n8n.com/webhook/xuatnhaphang-app`
+- Test URL trong browser: `https://your-n8n.com/webhook/app`
 
 ### API không response
 - Check Workflow 2 đã activate
-- Verify webhook path: `xuatnhaphang-api`
+- Verify webhook path: `api`
 - Check CORS headers
 - Test với curl
 
@@ -513,15 +559,24 @@ Webhook (GET) → HTML Node → Respond to Webhook
 ```
 Webhook (POST)
     ↓
-Switch (Route Actions)
-    ├─ addProduct → Code → Data Table → Respond
-    ├─ getProducts → Data Table → Respond
-    ├─ deleteProduct → Data Table → Respond
-    ├─ import → Code → Create TX → Read Inv → Calculate → Create/Update Inv → Respond
-    ├─ export → Code → Create TX → Read Inv → Validate → Update Inv → Respond
-    ├─ getInventory → Data Table → Respond
-    └─ getTransactions → Data Table → Respond
+Switch (8 Actions)
+    ├─ [0] addProduct → Code → Data Table Create
+    ├─ [1] getProducts → Data Table Read All
+    ├─ [2] updateProduct → Code → Data Table Update
+    ├─ [3] deleteProduct → Data Table Delete
+    ├─ [4] import → Code → Create TX → Read Inv → Calculate → Create/Update Inv
+    ├─ [5] export → Code → Create TX → Read Inv → Validate → Update Inv
+    ├─ [6] getInventory → Data Table Read All
+    └─ [7] getTransactions → Data Table Read All
+            ↓
+        (Tất cả paths merge lại)
+            ↓
+    Code - Format Response
+            ↓
+    Respond to Webhook (JSON)
 ```
+
+**Lưu ý:** Tất cả 8 outputs từ Switch kết nối đến cùng 1 Code - Format Response node
 
 ---
 
@@ -553,8 +608,8 @@ Switch (Route Actions)
 
 | Purpose | URL |
 |---------|-----|
-| HTML | `https://your-n8n.com/webhook/xuatnhaphang-app` |
-| API | `https://your-n8n.com/webhook/xuatnhaphang-api` |
+| HTML | `https://your-n8n.com/webhook/app` |
+| API | `https://your-n8n.com/webhook/api` |
 | Bot Web App | Same as HTML URL |
 
 ---
