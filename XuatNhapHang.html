@@ -1095,7 +1095,7 @@
             switch(action) {
                 case 'addProduct':
                     const product = {
-                        id: Date.now(),
+                        products_id: `prod_${Date.now()}`,
                         ...data,
                         created_at: new Date().toISOString(),
                         created_by_user_id: user.id,
@@ -1105,7 +1105,7 @@
                     return { success: true, data: product };
                 
                 case 'updateProduct':
-                    const index = AppState.products.findIndex(p => p.id == data.id);
+                    const index = AppState.products.findIndex(p => p.products_id == data.id);
                     if (index !== -1) {
                         AppState.products[index] = { ...AppState.products[index], ...data };
                         return { success: true, data: AppState.products[index] };
@@ -1148,7 +1148,7 @@
                     return { success: true, data: AppState.transactions };
                 
                 case 'deleteProduct':
-                    AppState.products = AppState.products.filter(p => p.id != data.id);
+                    AppState.products = AppState.products.filter(p => p.products_id != data.id);
                     return { success: true, data: {} };
                 
                 default:
@@ -1158,8 +1158,8 @@
 
         function updateInventory(productId, page, quantity, operation) {
             const key = `${productId}_${page}`;
-            const existing = AppState.inventory.find(inv => 
-                inv.product_id === productId && inv.page === page
+            const existing = AppState.inventory.find(inv =>
+                inv.products_id === productId && inv.page === page
             );
 
             if (existing) {
@@ -1170,7 +1170,7 @@
                 }
             } else if (operation === 'add') {
                 AppState.inventory.push({
-                    product_id: productId,
+                    products_id: productId,
                     page: page,
                     quantity: quantity
                 });
@@ -1233,8 +1233,8 @@
             }
 
             // Check inventory
-            const inventory = AppState.inventory.find(inv => 
-                inv.product_id === productId && inv.page === page
+            const inventory = AppState.inventory.find(inv =>
+                inv.products_id === productId && inv.page === page
             );
 
             if (!inventory || inventory.quantity < quantity) {
@@ -1319,10 +1319,10 @@
 
         // Edit Product
         function editProduct(productId) {
-            const product = AppState.products.find(p => p.id == productId);
+            const product = AppState.products.find(p => p.products_id == productId);
             if (!product) return;
 
-            document.getElementById('productId').value = product.id;
+            document.getElementById('productId').value = product.products_id;
             document.getElementById('productName').value = product.product_name;
             document.getElementById('productSKU').value = product.product_code;
             document.getElementById('productCategory').value = product.category || '';
@@ -1381,8 +1381,8 @@
                     const importSelect = document.getElementById('importProduct');
                     const exportSelect = document.getElementById('exportProduct');
                     
-                    const options = result.data.map(p => 
-                        `<option value="${p.id}">${p.product_name} (${p.product_code})</option>`
+                    const options = result.data.map(p =>
+                        `<option value="${p.products_id}">${p.product_name} (${p.product_code})</option>`
                     ).join('');
                     
                     importSelect.innerHTML = '<option value="">-- Chọn Sản Phẩm --</option>' + options;
@@ -1468,8 +1468,8 @@
                     <td>${p.category || '-'}</td>
                     <td>${formatCurrency(p.price)}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="editProduct('${p.id}')">✏️</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p.id}')">🗑️</button>
+                        <button class="btn btn-sm btn-primary" onclick="editProduct('${p.products_id}')">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p.products_id}')">🗑️</button>
                     </td>
                 </tr>
             `).join('');
@@ -1488,7 +1488,7 @@
             
             if (search) {
                 filtered = filtered.filter(inv => {
-                    const product = AppState.products.find(p => p.id === inv.product_id);
+                    const product = AppState.products.find(p => p.products_id === inv.products_id);
                     return product && product.product_name.toLowerCase().includes(search);
                 });
             }
@@ -1563,7 +1563,7 @@
             }
 
             tbody.innerHTML = filtered.map(tx => {
-                const product = AppState.products.find(p => p.id === tx.product_id);
+                const product = AppState.products.find(p => p.products_id === tx.products_id);
                 const typeBadge = tx.type === 'import' ? 'badge-success' : 'badge-danger';
                 const typeText = tx.type === 'import' ? '📥 Nhập' : '📤 Xuất';
                 
@@ -1650,7 +1650,7 @@
             }
 
             const activitiesHTML = recent.map(tx => {
-                const product = AppState.products.find(p => p.id === tx.product_id);
+                const product = AppState.products.find(p => p.products_id === tx.products_id);
                 const icon = tx.type === 'import' ? '📥' : '📤';
                 const color = tx.type === 'import' ? 'var(--success-color)' : 'var(--danger-color)';
                 const typeText = tx.type === 'import' ? 'Nhập' : 'Xuất';
@@ -1738,7 +1738,7 @@
                 
                 if (result.success) {
                     showAlert('✅ Xóa sản phẩm thành công!', 'success');
-                    AppState.products = AppState.products.filter(p => p.id !== productId);
+                    AppState.products = AppState.products.filter(p => p.products_id !== productId);
                     renderProducts();
                     loadProductsDropdown();
                 } else {

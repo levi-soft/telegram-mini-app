@@ -75,9 +75,9 @@
 
 ---
 
-## 📊 Database Schema
+## 📊 Database Schema (Google Sheets)
 
-### Table: `products`
+### Sheet: `products`
 ```
 - id: Number (Auto-increment, Primary key)
 - product_name: String
@@ -90,7 +90,7 @@
 - created_by_username: String (Username, tự động từ Telegram)
 ```
 
-### Table: `transactions`
+### Sheet: `transactions`
 ```
 - id: Number (Auto-increment, Primary key)
 - type: String (import/export)
@@ -105,7 +105,7 @@
 - username: String (Username người xuất/nhập, tự động từ Telegram)
 ```
 
-### Table: `inventory`
+### Sheet: `inventory`
 ```
 - id: Number (Auto-increment, Primary key)
 - product_id: Number (ID từ products table)
@@ -115,8 +115,9 @@
 ```
 
 **Lưu ý:**
-- Cột `id` tự động, không cần tạo thủ công
-- `username` tự động lấy từ Telegram WebApp API (user.username hoặc user.first_name)
+- Cột `id` = row number (auto)
+- `username` tự động lấy từ Telegram WebApp API
+- Google Sheets dễ xem, edit, backup
 
 ---
 
@@ -165,16 +166,12 @@ POST https://your-n8n.com/webhook/api  → API Actions
 
 ## 🚀 Quick Start
 
-### 1. Setup n8n Data Tables
+### 1. Setup Data Tables
 Tạo 3 tables: `products`, `transactions`, `inventory`
 
-### 2. Create n8n Workflow
-Setup workflow với:
-- Webhook node (GET/POST)
-- Parse request logic
-- Route actions (Switch node)
-- Data Table operations
-- Response formatting
+### 2. Create n8n Workflows
+- Workflow 1: HTML (GET)
+- Workflow 2: API (POST) với Data Table nodes
 
 ### 3. Configure Telegram Bot
 ```
