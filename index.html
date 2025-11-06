@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quản Lý Tài Sản</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Trang chủ -->
+        <div id="home-page" class="page active">
+            <div class="header">
+                <h1>📦 Quản Lý Tài Sản</h1>
+                <p class="subtitle">Hệ thống quản lý hàng hóa công ty</p>
+            </div>
+            
+            <div class="menu-container">
+                <button class="menu-btn" onclick="navigateTo('import-page')">
+                    <div class="icon">📥</div>
+                    <div class="label">Nhập Hàng</div>
+                    <div class="description">Ghi nhận hàng hóa nhập kho</div>
+                </button>
+                
+                <button class="menu-btn" onclick="navigateTo('check-page')">
+                    <div class="icon">✅</div>
+                    <div class="label">Kiểm Hàng</div>
+                    <div class="description">Kiểm tra và xác nhận tồn kho</div>
+                </button>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-items">0</div>
+                    <div class="stat-label">Tổng mặt hàng</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pending-checks">0</div>
+                    <div class="stat-label">Cần kiểm tra</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trang Nhập Hàng -->
+        <div id="import-page" class="page">
+            <div class="header">
+                <button class="back-btn" onclick="navigateTo('home-page')">← Quay lại</button>
+                <h2>Nhập Hàng</h2>
+            </div>
+            
+            <form id="import-form" class="form-container">
+                <div class="form-group">
+                    <label for="product-name">Tên sản phẩm *</label>
+                    <input type="text" id="product-name" required placeholder="Nhập tên sản phẩm">
+                </div>
+                
+                <div class="form-group">
+                    <label for="product-code">Mã sản phẩm *</label>
+                    <input type="text" id="product-code" required placeholder="Nhập mã sản phẩm">
+                </div>
+                
+                <div class="form-group">
+                    <label for="quantity">Số lượng *</label>
+                    <input type="number" id="quantity" required min="1" placeholder="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="unit">Đơn vị *</label>
+                    <select id="unit" required>
+                        <option value="">-- Chọn đơn vị --</option>
+                        <option value="cái">Cái</option>
+                        <option value="chiếc">Chiếc</option>
+                        <option value="hộp">Hộp</option>
+                        <option value="thùng">Thùng</option>
+                        <option value="kg">Kg</option>
+                        <option value="lít">Lít</option>
+                        <option value="bộ">Bộ</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="supplier">Nhà cung cấp</label>
+                    <input type="text" id="supplier" placeholder="Tên nhà cung cấp">
+                </div>
+                
+                <div class="form-group">
+                    <label for="import-date">Ngày nhập *</label>
+                    <input type="date" id="import-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Ghi chú</label>
+                    <textarea id="notes" rows="3" placeholder="Ghi chú thêm về lô hàng..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary">💾 Lưu phiếu nhập</button>
+            </form>
+            
+            <div class="recent-imports">
+                <h3>Phiếu nhập gần đây</h3>
+                <div id="recent-imports-list"></div>
+            </div>
+        </div>
+
+        <!-- Trang Kiểm Hàng -->
+        <div id="check-page" class="page">
+            <div class="header">
+                <button class="back-btn" onclick="navigateTo('home-page')">← Quay lại</button>
+                <h2>Kiểm Hàng</h2>
+            </div>
+            
+            <div class="search-container">
+                <input type="text" id="search-product" placeholder="🔍 Tìm kiếm sản phẩm hoặc mã...">
+            </div>
+            
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">Tất cả</button>
+                <button class="filter-btn" data-filter="pending">Chờ kiểm</button>
+                <button class="filter-btn" data-filter="checked">Đã kiểm</button>
+            </div>
+            
+            <div id="inventory-list" class="inventory-list"></div>
+        </div>
+
+        <!-- Modal Kiểm Hàng -->
+        <div id="check-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Kiểm tra hàng hóa</h3>
+                    <button class="close-btn" onclick="closeCheckModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="product-info">
+                        <p><strong>Sản phẩm:</strong> <span id="modal-product-name"></span></p>
+                        <p><strong>Mã SP:</strong> <span id="modal-product-code"></span></p>
+                        <p><strong>Số lượng hiện tại:</strong> <span id="modal-quantity"></span></p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="actual-quantity">Số lượng thực tế *</label>
+                        <input type="number" id="actual-quantity" min="0" placeholder="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="condition">Tình trạng *</label>
+                        <select id="condition" required>
+                            <option value="good">✅ Tốt</option>
+                            <option value="damaged">⚠️ Hư hỏng</option>
+                            <option value="expired">❌ Hết hạn</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="check-notes">Ghi chú kiểm tra</label>
+                        <textarea id="check-notes" rows="3" placeholder="Ghi chú về tình trạng hàng..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeCheckModal()">Hủy</button>
+                    <button class="btn-primary" onclick="submitCheck()">Xác nhận kiểm tra</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
