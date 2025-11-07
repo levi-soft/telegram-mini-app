@@ -150,6 +150,59 @@ active: true
 ```
 → Quản lý toàn bộ, full access
 
+
+#### 3.3a. Add Rule 0 - Check Auth (Thêm trước 3 rules cũ)
+
+**Rule 0 - Check Auth:**
+- Value 1: `{{ $json.query.endpoint }}`
+- Operation: **Equal**
+- Value 2: `check_auth`
+
+**Output 0 - Check Auth Flow:**
+
+Switch output 0 → **Get Many** node:
+- Table: **allowed_users**
+- Filter: `telegram_id` Equal `{{ $json.query.user_id }}`
+
+→ **Code** node (Format auth response):
+```javascript
+const users = $input.all();
+
+if (users.length === 0) {
+  return [{
+    json: {
+      success: false,
+      authorized: false,
+      message: 'Không có quyền truy cập'
+    }
+  }];
+}
+
+const user = users[0].json;
+
+if (!user.active) {
+  return [{
+    json: {
+      success: false,
+      authorized: false,
+      message: 'Tài khoản đã bị khóa'
+    }
+  }];
+}
+
+return [{
+  json: {
+    success: true,
+    authorized: true,
+    pages: user.pages  // "RR88,XX88,MM88" hoặc "MM88"
+  }
+}];
+```
+
+→ **Respond to Webhook**
+
+**Lưu ý:** Endpoint này KHÔNG cần check whitelist trước, vì chính nó là endpoint để check whitelist!
+
 **Case 2: RR88 Warehouse Staff**
 ```
 telegram_id: 222222222

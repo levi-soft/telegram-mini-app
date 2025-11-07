@@ -947,11 +947,12 @@
         };
 
         // Global State
-        let currentPage = 'RR88';
+        let currentPage = 'RR88'; // Will be updated based on user permissions
         let currentSection = 'dashboard';
         let products = [];
         let transactions = [];
         let inventory = {};
+        let allowedPages = []; // User's allowed pages
 
         // Telegram WebApp
         let tg = window.Telegram?.WebApp;
@@ -980,24 +981,102 @@
             try {
                 showLoading();
                 
-                // Load initial data
+                // Step 1: Check permissions first
+                const authResult = await checkUserPermissions();
+                
+                if (!authResult.authorized) {
+                    handleUnauthorized(authResult.message);
+                    hideLoading();
+                    return;
+                }
+                
+                // Step 2: Setup allowed pages
+                allowedPages = authResult.pages || [];
+                
+                // Step 3: Set default page to first allowed page
+                if (allowedPages.length > 0) {
+                    currentPage = allowedPages[0];
+                }
+                
+                // Step 4: Update UI to show only allowed pages
+                updatePageButtons();
+                
+                // Step 5: Load data for allowed page
                 await loadProducts();
                 await loadTransactions();
                 await loadInventory();
                 
-                // Setup event listeners
+                // Step 6: Setup listeners
                 setupEventListeners();
-                
-                // Update UI
                 updateDashboard();
                 
                 hideLoading();
                 showToast('success', 'Ứng dụng đã sẵn sàng! 🎉');
             } catch (error) {
                 hideLoading();
-                showToast('error', 'Lỗi khởi tạo: ' + error.message);
-                logError('Initialize Error', error);
+                if (error.message !== 'Unauthorized') {
+                    showToast('error', 'Lỗi khởi tạo: ' + error.message);
+                    logError('Initialize Error', error);
+                }
             }
+        }
+        
+        async function checkUserPermissions() {
+            try {
+                const url = `${CONFIG.N8N_WEBHOOK_URL}/${CONFIG.API_PATH}?endpoint=check_auth&user_id=${currentUserId}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    return { authorized: false, message: 'Không thể kiểm tra quyền' };
+                }
+                
+                const result = await response.json();
+                
+                if (result.success && result.authorized) {
+                    // Parse pages string to array
+                    const pagesStr = result.pages || '';
+                    const pages = pagesStr.split(',').map(p => p.trim()).filter(p => p);
+                    
+                    return {
+                        authorized: true,
+                        pages: pages
+                    };
+                }
+                
+                return {
+                    authorized: false,
+                    message: result.message || 'Không có quyền truy cập'
+                };
+            } catch (error) {
+                console.error('[Auth] Check permission error:', error);
+                return {
+                    authorized: false,
+                    message: 'Lỗi kiểm tra quyền'
+                };
+            }
+        }
+        
+        function updatePageButtons() {
+            const allPages = ['RR88', 'XX88', 'MM88'];
+            
+            allPages.forEach(page => {
+                const btn = document.querySelector(`.page-btn[data-page="${page}"]`);
+                if (btn) {
+                    if (allowedPages.includes(page)) {
+                        // User có quyền - show button
+                        btn.style.display = '';
+                        // Set active cho page đầu tiên
+                        if (page === currentPage) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    } else {
+                        // User không có quyền - hide button
+                        btn.style.display = 'none';
+                    }
+                }
+            });
         }
 
         function setupEventListeners() {
@@ -1020,18 +1099,46 @@
                 });
             });
 
-            // Forms
-            document.getElementById('form-nhap').addEventListener('submit', handleNhapHang);
-            document.getElementById('form-xuat').addEventListener('submit', handleXuatHang);
-            document.getElementById('form-product').addEventListener('submit', handleSaveProduct);
+            // Forms - với null check
+            const formNhap = document.getElementById('form-nhap');
+            if (formNhap) {
+                formNhap.addEventListener('submit', handleNhapHang);
+            }
+            
+            const formXuat = document.getElementById('form-xuat');
+            if (formXuat) {
+                formXuat.addEventListener('submit', handleXuatHang);
+            }
+            
+            const formProduct = document.getElementById('form-product');
+            if (formProduct) {
+                formProduct.addEventListener('submit', handleSaveProduct);
+            }
 
-            // Search
-            document.getElementById('search-tonkho')?.addEventListener('input', debounce(filterTonKho, 300));
-            document.getElementById('search-lichsu')?.addEventListener('input', debounce(filterLichSu, 300));
-            document.getElementById('filter-type')?.addEventListener('change', filterLichSu);
+            // Search - với null check
+            const searchTonKho = document.getElementById('search-tonkho');
+            if (searchTonKho) {
+                searchTonKho.addEventListener('input', debounce(filterTonKho, 300));
+            }
+            
+            const searchLichSu = document.getElementById('search-lichsu');
+            if (searchLichSu) {
+                searchLichSu.addEventListener('input', debounce(filterLichSu, 300));
+            }
+            
+            const filterType = document.getElementById('filter-type');
+            if (filterType) {
+                filterType.addEventListener('change', filterLichSu);
+            }
 
             // Buttons
-            document.getElementById('btn-add-product')?.addEventListener('click', () => openProductModal());
+            const btnAddProduct = document.getElementById('btn-add-product');
+            if (btnAddProduct) {
+                btnAddProduct.addEventListener('click', () => openProductModal());
+            }
+            
+            // Setup modal listeners
+            setupModalListeners();
         }
 
         function showSection(sectionId) {
@@ -1087,13 +1194,37 @@
 
                 // Include user_id in URL for authentication
                 const url = `${CONFIG.N8N_WEBHOOK_URL}/${CONFIG.API_PATH}?endpoint=${endpoint}&page=${currentPage}&user_id=${currentUserId}`;
+                console.log('[API] Calling:', method, url);
+                
                 const response = await fetch(url, options);
                 
+                console.log('[API] Response status:', response.status);
+                console.log('[API] Response OK:', response.ok);
+                
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('[API] Error response:', errorText);
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                const result = await response.json();
+                // Get response text first
+                const responseText = await response.text();
+                console.log('[API] Response text:', responseText);
+                
+                // Try parse JSON
+                if (!responseText || responseText.trim() === '') {
+                    throw new Error('Empty response from server');
+                }
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                    console.log('[API] Parsed result:', result);
+                } catch (parseError) {
+                    console.error('[API] JSON parse error:', parseError);
+                    console.error('[API] Invalid JSON:', responseText);
+                    throw new Error('Invalid JSON response from server');
+                }
                 
                 // Check for unauthorized
                 if (result.success === false && result.error === 'Unauthorized') {
@@ -1103,6 +1234,7 @@
                 
                 return result;
             } catch (error) {
+                console.error('[API] Error:', error);
                 logError('API Call Error', error);
                 throw error;
             }
@@ -1113,36 +1245,41 @@
             hideLoading();
             
             // Show unauthorized message
-            document.querySelector('.content').innerHTML = `
-                <div class="card" style="text-align: center; padding: 40px;">
-                    <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
-                    <h2 style="margin-bottom: 16px;">Không Có Quyền Truy Cập</h2>
-                    <p style="color: var(--text-secondary); margin-bottom: 24px;">
-                        ${message || 'Bạn không có quyền sử dụng ứng dụng này.'}
-                    </p>
-                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 24px;">
-                        Telegram ID của bạn:<br>
-                        <strong style="font-size: 18px; color: var(--primary);">${currentUserId || 'N/A'}</strong>
-                    </p>
-                    <a href="https://t.me/PinusITRR88" class="btn btn-primary" style="text-decoration: none; max-width: 300px; margin: 0 auto;">
-                        <span>💬</span>
-                        <span>Liên Hệ Admin Để Được Cấp Quyền</span>
-                    </a>
-                    <p style="margin-top: 16px; font-size: 13px; color: var(--text-secondary);">
-                        Gửi Telegram ID của bạn cho Admin
-                    </p>
-                </div>
-            `;
+            const content = document.querySelector('.content');
+            if (content) {
+                content.innerHTML = `
+                    <div class="card" style="text-align: center; padding: 40px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+                        <h2 style="margin-bottom: 16px;">Không Có Quyền Truy Cập</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                            ${message || 'Bạn không có quyền sử dụng ứng dụng này.'}
+                        </p>
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 24px;">
+                            Telegram ID của bạn:<br>
+                            <strong style="font-size: 18px; color: var(--primary);">${currentUserId || 'N/A'}</strong>
+                        </p>
+                        <a href="https://t.me/PinusITRR88" class="btn btn-primary" style="text-decoration: none; max-width: 300px; margin: 0 auto; display: inline-flex;">
+                            <span>💬</span>
+                            <span>Liên Hệ Admin Để Được Cấp Quyền</span>
+                        </a>
+                        <p style="margin-top: 16px; font-size: 13px; color: var(--text-secondary);">
+                            Gửi Telegram ID của bạn cho Admin @PinusITRR88
+                        </p>
+                    </div>
+                `;
+            }
             
             // Disable navigation
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.disabled = true;
                 btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
             });
             
             document.querySelectorAll('.page-btn').forEach(btn => {
                 btn.disabled = true;
                 btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
             });
         }
 
@@ -1155,8 +1292,12 @@
                     products = response.data || [];
                 }
             } catch (error) {
-                logError('Load Products Error', error);
-                showToast('error', 'Không thể tải danh sách sản phẩm');
+                // If unauthorized, don't show error toast
+                if (error.message !== 'Unauthorized') {
+                    logError('Load Products Error', error);
+                    showToast('error', 'Không thể tải danh sách sản phẩm');
+                }
+                throw error; // Stop initialization
             }
         }
 
@@ -1167,8 +1308,11 @@
                     transactions = response.data || [];
                 }
             } catch (error) {
-                logError('Load Transactions Error', error);
-                showToast('error', 'Không thể tải lịch sử xuất nhập');
+                if (error.message !== 'Unauthorized') {
+                    logError('Load Transactions Error', error);
+                    showToast('error', 'Không thể tải lịch sử xuất nhập');
+                }
+                // Don't throw, continue loading
             }
         }
 
@@ -1185,8 +1329,11 @@
                     });
                 }
             } catch (error) {
-                logError('Load Inventory Error', error);
-                showToast('error', 'Không thể tải tồn kho');
+                if (error.message !== 'Unauthorized') {
+                    logError('Load Inventory Error', error);
+                    showToast('error', 'Không thể tải tồn kho');
+                }
+                // Don't throw, continue
             }
         }
 
@@ -1697,14 +1844,23 @@
             }).catch(() => {}); // Silent fail for logging
         }
 
-        // Close modals on background click
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('active');
-                }
+        // Setup modal listeners (called after DOM ready and authorized)
+        function setupModalListeners() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('active');
+                    }
+                });
             });
-        });
+        }
+        
+        // Call when authorized
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                // Wait for init, will be called in setupEventListeners if authorized
+            });
+        }
     </script>
 </body>
 </html>
