@@ -1121,7 +1121,30 @@
         
         if (tg) {
             tg.ready();
-            tg.expand();
+
+            // Kiểm tra query hoặc context để chọn chế độ
+            const mode = tg.initDataUnsafe?.start_param || 'full'; // compact | full | fullscreen
+
+            switch (mode) {
+                case 'compact':
+                    tg.setHeaderColor('secondary_bg_color');
+                    tg.disableClosingConfirmation();
+                    break;
+
+                case 'full':
+                    tg.expand(); // mở rộng trong webview Telegram
+                    tg.setHeaderColor('bg_color');
+                    break;
+
+                case 'fullscreen':
+                    if (tg.requestFullscreen) {
+                        tg.requestFullscreen(); // Telegram >= 8.7
+                    } else {
+                        tg.expand(); // fallback
+                    }
+                    break;
+            }
+
             tg.MainButton.hide();
             
             // Get user info from Telegram
