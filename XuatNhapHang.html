@@ -1082,11 +1082,21 @@
         function setupEventListeners() {
             // Page selector
             document.querySelectorAll('.page-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', async function() {
                     document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                     currentPage = this.dataset.page;
-                    refreshCurrentSection();
+                    try {
+                        showLoading();
+                        await loadProducts();
+                        await loadTransactions();
+                        await loadInventory();
+                        refreshCurrentSection();
+                        hideLoading();
+                    } catch (error) {
+                        hideLoading();
+                        showToast('error', 'Lỗi khi chuyển page: ' + error.message);
+                    }
                 });
             });
 
@@ -1435,10 +1445,11 @@
                 showLoading();
                 
                 const response = await apiCall('products', 'POST', {
-                    id: id ? parseInt(id) : null,
+                    id: id && id.trim() !== '' ? parseInt(id) : null, // Only send ID if exists
                     name: name,
                     unit: unit,
                     description: description,
+                    page: currentPage,
                 });
 
                 if (response.success) {
@@ -1751,9 +1762,12 @@
             const title = document.getElementById('modal-product-title');
             const form = document.getElementById('form-product');
             
+            // Reset form COMPLETELY
             form.reset();
+            document.getElementById('product-id').value = ''; // Clear hidden ID field
             
             if (productId) {
+                // Edit mode - có ID
                 const product = products.find(p => p.id === productId);
                 if (product) {
                     title.textContent = 'Sửa Sản Phẩm';
@@ -1763,14 +1777,26 @@
                     document.getElementById('product-description').value = product.description || '';
                 }
             } else {
+                // Add mode - KHÔNG ID
                 title.textContent = 'Thêm Sản Phẩm';
+                document.getElementById('product-id').value = ''; // Ensure empty
             }
             
             modal.classList.add('active');
         }
 
         function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('active');
+            
+            // Reset form khi đóng để clear ID cũ
+            if (modalId === 'modal-product') {
+                const form = document.getElementById('form-product');
+                if (form) {
+                    form.reset();
+                    document.getElementById('product-id').value = ''; // Clear ID
+                }
+            }
         }
 
         function editProduct(productId) {
