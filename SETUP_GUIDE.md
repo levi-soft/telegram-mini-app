@@ -181,7 +181,32 @@ Switch output 1 → **Get Many** node:
 - Sort: `timestamp` **DESC**
 - Limit: **100**
 
-→ **Code** (Format) → **Respond to Webhook**
+→ **Code** node (Format response):
+```javascript
+// Format và ensure tất cả fields được include
+const transactions = $input.all().map(item => {
+  const t = item.json;
+  return {
+    id: t.id,
+    type: t.type,
+    product_id: t.product_id,
+    quantity: t.quantity,
+    note: t.note || '',
+    page: t.page,
+    user: t.user || 'Unknown',  // ← Quan trọng!
+    timestamp: t.timestamp
+  };
+});
+
+return [{
+  json: {
+    success: true,
+    data: transactions
+  }
+}];
+```
+
+→ **Respond to Webhook**
 
 #### 3.6. Output 2 - GET Inventory
 
@@ -245,16 +270,27 @@ return [{
 Same as GET workflow:
 - 3 rules theo `endpoint` parameter
 
-#### 4.4. Output 0 - POST Product
+#### 4.4. Output 0 - POST Product (Create/Update by Name)
 
-Switch output 0 → **Code** (Validate):
+**Flow:**
+```
+Switch output 0 → Code (Validate) → Get Many (Find by name) → IF (Exists?)
+                                                               ├─ Yes → Update
+                                                               └─ No → Insert
+```
+
+**Node 1: Code - Validate & Prepare**
+
+Add **Code** node:
 ```javascript
 const body = $json.body;
 
+// Validate required fields
 if (!body.name || !body.unit || !body.page) {
-  throw new Error('Missing required fields');
+  throw new Error('Thiếu thông tin bắt buộc');
 }
 
+// Prepare product data
 return [{
   json: {
     name: body.name,
@@ -265,22 +301,130 @@ return [{
 }];
 ```
 
-→ **Insert** node:
+**Node 2: Get Many - Check Existing**
+
+Add **Get Many** node:
+- Table: **products**
+- Return All: **ON**
+- Filters:
+  - Field: `name` **Equal** `{{ $json.name }}`
+  - **AND** Field: `page` **Equal** `{{ $json.page }}`
+
+**Node 3: Code - Merge Data**
+
+Add **Code** node:
+```javascript
+const newData = $('Code').item.json; // Data mới từ form
+const existing = $input.all(); // Kết quả query
+
+// Nếu tìm thấy existing product
+if (existing.length > 0) {
+  const existingProduct = existing[0].json;
+  return [{
+    json: {
+      ...newData,
+      id: existingProduct.id,  // Giữ ID cũ
+      isUpdate: true
+    }
+  }];
+}
+
+// Nếu không tìm thấy - product mới
+return [{
+  json: {
+    ...newData,
+    isUpdate: false
+  }
+}];
+```
+
+**Node 4: IF - Check Is Update**
+
+Add **IF** node:
+- Condition: `{{ $json.isUpdate }}` **Equal** `true`
+
+---
+
+**TRUE BRANCH (Update existing):**
+
+**Node 5a: Update**
+
+Add **Update** node:
+- Table: **products**
+- Update Mode: **Update One**
+- Filter to Find Row:
+  - Field: `id` **Equal** `{{ $json.id }}`
+- Fields to Update:
+  - `name`: `{{ $json.name }}`
+  - `unit`: `{{ $json.unit }}`
+  - `description`: `{{ $json.description }}`
+
+**FALSE BRANCH (Insert new):**
+
+**Node 5b: Insert**
+
+Add **Insert** node:
 - Table: **products**
 - Data to Insert: `{{ $json }}`
 
-→ **Code** (Format) → **Respond to Webhook**
+---
 
-#### 4.5. Output 1 - POST Transaction
+**Both Branches → Node 6: Format Response**
 
-Switch output 1 → **Code** (Validate):
+Add **Code** node:
+```javascript
+return [{
+  json: {
+    success: true,
+    message: 'Lưu sản phẩm thành công',
+    data: $json
+  }
+}];
+```
+
+**Node 7: Respond to Webhook**
+
+**Tổng kết:**
+```
+Validate → Get Existing (by name+page) → Merge → IF (exists?)
+                                                  ├─ Yes → Update → Respond
+                                                  └─ No → Insert → Respond
+```
+
+**Lợi ích:**
+- ✅ Tránh duplicate products với cùng tên
+- ✅ Update tự động nếu sản phẩm đã tồn tại
+- ✅ User chỉ cần sửa và save, không cần quan tâm create/update
+
+#### 4.5. Output 1 - POST Transaction (Chi Tiết Từng Node)
+
+**Flow overview:**
+```
+Switch output 1 → Code (Validate) → IF (Check type)
+                                    ├─ True (xuat) → Get Trans → Calculate → IF (Check inventory) → Insert
+                                    └─ False (nhap) → Insert directly
+```
+
+**Node 1: Code - Validate & Prepare**
+
+Add **Code** node:
 ```javascript
 const body = $json.body;
 
+// Validate required fields
 if (!body.type || !body.product_id || !body.quantity) {
-  throw new Error('Missing fields');
+  throw new Error('Thiếu thông tin bắt buộc');
 }
 
+if (!body.page || !body.user) {
+  throw new Error('Thiếu page hoặc user');
+}
+
+if (!['nhap', 'xuat'].includes(body.type)) {
+  throw new Error('Loại không hợp lệ');
+}
+
+// Prepare data để insert
 return [{
   json: {
     type: body.type,
@@ -288,24 +432,106 @@ return [{
     quantity: parseInt(body.quantity),
     note: body.note || '',
     page: body.page,
-    user: body.user
+    user: body.user  // First name từ Telegram
   }
 }];
 ```
 
-→ **IF** node (Check nếu xuat - cần kiểm tra tồn kho):
+**Node 2: IF - Check Type**
+
+Add **IF** node:
 - Condition: `{{ $json.type }}` **Equal** `xuat`
 
-**If True (xuat):**
-- Get transactions for this product
-- Calculate inventory
-- IF sufficient: Insert transaction
-- IF not: Throw error
+---
 
-**If False (nhap):**
-- Insert directly (no check needed)
+**TRUE BRANCH (xuat - cần check tồn kho):**
 
-→ Format → **Respond to Webhook**
+**Node 3a: Get Many - Query Transactions**
+
+Add **Get Many** node:
+- Table: **transactions**
+- Return All: **ON**
+- Filters:
+  - Field: `page` Equal `{{ $json.page }}`
+  - **AND** Field: `product_id` Equal `{{ $json.product_id }}`
+
+**Node 4a: Code - Calculate Inventory**
+
+```javascript
+const newTransaction = $('Code').item.json; // Transaction mới
+const existingTrans = $input.all().map(i => i.json);
+
+// Tính tồn kho hiện tại
+let currentInventory = 0;
+
+existingTrans.forEach(t => {
+  if (t.type === 'nhap') {
+    currentInventory += parseInt(t.quantity);
+  } else if (t.type === 'xuat') {
+    currentInventory -= parseInt(t.quantity);
+  }
+});
+
+// Check đủ hàng không
+const requestedQty = newTransaction.quantity;
+
+if (currentInventory < requestedQty) {
+  throw new Error(`Không đủ hàng! Tồn kho: ${currentInventory}, Yêu cầu: ${requestedQty}`);
+}
+
+// OK → Trả về transaction để insert
+return [{
+  json: newTransaction
+}];
+```
+
+**Node 5a: Insert - Save Transaction**
+
+Add **Insert** node:
+- Table: **transactions**
+- Data to Insert: `{{ $json }}`
+
+→ Go to **Node 6: Format Response** (skip to end)
+
+---
+
+**FALSE BRANCH (nhap - không cần check):**
+
+**Node 3b: Insert - Save Directly**
+
+Add **Insert** node:
+- Table: **transactions**
+- Data to Insert: `{{ $json }}`
+
+→ Go to **Node 6: Format Response**
+
+---
+
+**Node 6: Format Response (Merge point)**
+
+Add **Code** node:
+```javascript
+return [{
+  json: {
+    success: true,
+    message: 'Thành công',
+    data: $json
+  }
+}];
+```
+
+**Node 7: Respond to Webhook**
+
+Add **Respond to Webhook** node
+
+---
+
+**Tổng kết flow:**
+```
+Validate → IF (type = xuat?)
+           ├─ Yes → Get Transactions → Calculate → Check → Insert → Format → Respond
+           └─ No → Insert → Format → Respond
+```
 
 #### 4.6. Save & Activate
 
