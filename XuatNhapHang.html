@@ -30,6 +30,57 @@
             --shadow: rgba(0, 0, 0, 0.1);
         }
 
+        /* Dark Mode - Auto từ Telegram */
+        [data-theme="dark"] {
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border: #374151;
+            --card-bg: #1f2937;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --bg-start: #1f2937;
+            --bg-end: #111827;
+        }
+        
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+        }
+        
+        [data-theme="dark"] .container {
+            background: #111827;
+        }
+        
+        [data-theme="dark"] .nav {
+            background: #1f2937;
+        }
+        
+        [data-theme="dark"] .nav-btn {
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            color: #f3f4f6;
+        }
+        
+        [data-theme="dark"] .form-control {
+            background: #374151;
+            color: #f3f4f6;
+            border-color: #4b5563;
+        }
+        
+        [data-theme="dark"] .inventory-table {
+            background: #1f2937;
+        }
+        
+        [data-theme="dark"] .inventory-table td {
+            border-bottom-color: #374151;
+        }
+        
+        [data-theme="dark"] .modal-content {
+            background: #1f2937;
+        }
+        
+        [data-theme="dark"] .toast {
+            background: #1f2937;
+            color: #f3f4f6;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
@@ -47,11 +98,11 @@
             background: #f9fafb;
         }
 
-        /* Header */
+        /* Header - Compact hơn cho mobile */
         .header {
-            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
-            padding: 20px;
+            padding: 16px;
             position: sticky;
             top: 0;
             z-index: 100;
@@ -71,37 +122,41 @@
         }
 
         .header-title {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
 
         .header-subtitle {
-            font-size: 14px;
+            font-size: 12px;
             opacity: 0.9;
         }
 
-        /* Page Selector */
+        /* Page Selector - Touch-friendly */
         .page-selector {
             display: flex;
-            gap: 8px;
-            margin-top: 15px;
+            gap: 6px;
+            margin-top: 12px;
             padding: 0;
         }
 
         .page-btn {
             flex: 1;
-            padding: 10px;
+            padding: 8px;
             border: 2px solid rgba(255,255,255,0.3);
             background: rgba(255,255,255,0.1);
             color: white;
-            border-radius: 12px;
-            font-size: 14px;
+            border-radius: 10px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
+            min-height: 44px; /* Touch target size */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .page-btn.active {
@@ -112,17 +167,17 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        /* Navigation */
+        /* Navigation - Compact & Touch-friendly */
         .nav {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            padding: 16px;
+            gap: 8px;
+            padding: 12px;
             background: white;
         }
 
         .nav-btn {
-            padding: 16px 12px;
+            padding: 12px 8px;
             border: none;
             background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
             border-radius: 12px;
@@ -131,9 +186,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             position: relative;
             overflow: hidden;
+            min-height: 70px; /* Touch target */
         }
 
         .nav-btn::before {
@@ -159,18 +215,18 @@
         }
 
         .nav-btn-icon {
-            font-size: 28px;
+            font-size: 24px;
             line-height: 1;
         }
 
         .nav-btn-text {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
         }
 
-        /* Content */
+        /* Content - Compact padding */
         .content {
-            padding: 16px;
+            padding: 12px;
             animation: fadeIn 0.5s ease-out;
         }
 
@@ -193,12 +249,12 @@
             display: block;
         }
 
-        /* Card */
+        /* Card - Compact cho mobile */
         .card {
             background: var(--card-bg);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
             box-shadow: 0 2px 8px var(--shadow);
             animation: slideUp 0.5s ease-out;
         }
@@ -215,36 +271,37 @@
         }
 
         .card-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
-        /* Form */
+        /* Form - Better mobile UX */
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-primary);
         }
 
         .form-control {
             width: 100%;
-            padding: 12px;
+            padding: 14px 12px; /* Larger touch target */
             border: 2px solid var(--border);
-            border-radius: 12px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size: 16px; /* Prevent zoom on iOS */
             transition: all 0.3s ease;
             background: white;
+            -webkit-appearance: none; /* iOS styled */
         }
 
         .form-control:focus {
@@ -261,11 +318,11 @@
             padding-right: 40px;
         }
 
-        /* Button */
+        /* Button - Touch-friendly */
         .btn {
-            padding: 14px 24px;
+            padding: 16px 24px; /* Larger touch target */
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -275,6 +332,7 @@
             justify-content: center;
             gap: 8px;
             width: 100%;
+            min-height: 48px; /* Minimum touch target */
         }
 
         .btn-primary {
@@ -308,21 +366,25 @@
             transform: none !important;
         }
 
-        /* Stats Grid */
+        /* Stats Grid - Compact */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
         .stat-card {
             background: linear-gradient(135deg, var(--card-bg) 0%, #f9fafb 100%);
             border-radius: 12px;
-            padding: 16px;
+            padding: 14px;
             box-shadow: 0 2px 6px var(--shadow);
             border-left: 4px solid var(--primary);
             animation: pulse 2s infinite;
+        }
+        
+        [data-theme="dark"] .stat-card {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
         }
 
         @keyframes pulse {
@@ -347,7 +409,7 @@
         }
 
         .stat-value {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 700;
             margin-bottom: 4px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -357,21 +419,25 @@
         }
 
         .stat-label {
-            font-size: 13px;
+            font-size: 11px;
             color: var(--text-secondary);
             font-weight: 500;
         }
 
-        /* List */
+        /* List - Compact */
         .list-item {
             background: white;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
             box-shadow: 0 2px 6px var(--shadow);
             border-left: 4px solid var(--primary);
             transition: all 0.3s ease;
             animation: slideRight 0.5s ease-out;
+        }
+        
+        [data-theme="dark"] .list-item {
+            background: #1f2937;
         }
 
         @keyframes slideRight {
@@ -407,13 +473,13 @@
 
         .list-item-title {
             font-weight: 700;
-            font-size: 16px;
+            font-size: 15px;
         }
 
         .list-item-badge {
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 11px;
             font-weight: 600;
             color: white;
         }
@@ -429,9 +495,10 @@
         .list-item-details {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            font-size: 14px;
+            gap: 6px;
+            font-size: 13px;
             color: var(--text-secondary);
+            margin-top: 8px;
         }
 
         .list-item-detail {
@@ -711,19 +778,91 @@
             color: var(--text-primary);
         }
 
-        /* Responsive */
+        /* Responsive - Better mobile */
         @media (max-width: 480px) {
+            .header {
+                padding: 14px;
+            }
+            
+            .header-title {
+                font-size: 18px;
+            }
+            
+            .header-subtitle {
+                font-size: 11px;
+            }
+            
+            .page-btn {
+                font-size: 12px;
+                padding: 6px;
+            }
+            
             .nav {
                 grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+                padding: 10px;
             }
-
+            
+            .nav-btn {
+                padding: 10px 6px;
+                min-height: 65px;
+            }
+            
+            .nav-btn-icon {
+                font-size: 22px;
+            }
+            
+            .nav-btn-text {
+                font-size: 10px;
+            }
+            
+            .content {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 14px;
+                margin-bottom: 10px;
+            }
+            
+            .stat-card {
+                padding: 12px;
+            }
+            
+            .stat-value {
+                font-size: 22px;
+            }
+            
+            .stat-label {
+                font-size: 10px;
+            }
+            
+            .list-item {
+                padding: 12px;
+            }
+            
             .inventory-table {
-                font-size: 12px;
+                font-size: 11px;
             }
 
             .inventory-table th,
             .inventory-table td {
-                padding: 8px;
+                padding: 8px 6px;
+            }
+        }
+        
+        /* Desktop - Larger screens */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 768px;
+            }
+            
+            .nav {
+                grid-template-columns: repeat(6, 1fr); /* 6 columns trên desktop */
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr); /* 4 columns trên desktop */
             }
         }
     </style>
@@ -975,6 +1114,15 @@
                 currentUser = user.first_name || user.username || 'Unknown';
                 currentUserId = user.id; // Telegram user ID
             }
+            
+            // Apply Telegram theme
+            const theme = tg.colorScheme || 'light'; // 'light' or 'dark'
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            // Listen for theme changes
+            tg.onEvent('themeChanged', function() {
+                document.documentElement.setAttribute('data-theme', tg.colorScheme);
+            });
         }
 
         // Initialize
@@ -1759,6 +1907,124 @@
                     </div>
                 `;
             }).join('');
+        // Export to Excel/CSV Function
+        function exportExcel() {
+            try {
+                // Check if on mobile
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                
+                if (isMobile) {
+                    // Mobile: Export as CSV (works better on mobile)
+                    exportCSV();
+                } else {
+                    // Desktop: Export as Excel
+                    exportExcelFile();
+                }
+            } catch (error) {
+                showToast('error', 'Lỗi export: ' + error.message);
+                logError('Export Error', error);
+            }
+        }
+        
+        function exportExcelFile() {
+            // Prepare Sheet 1 - Tồn Kho
+            const pageInventory = inventory[currentPage] || {};
+            const tonkhoData = [['Sản Phẩm', 'Đơn Vị', 'Tồn Kho', 'Page']];
+            
+            products.forEach(product => {
+                if (product.page === currentPage) {
+                    const qty = pageInventory[product.id] || 0;
+                    tonkhoData.push([product.name, product.unit, qty, product.page]);
+                }
+            });
+            
+            // Prepare Sheet 2 - Lịch Sử
+            const lichsuData = [['Ngày Giờ', 'Loại', 'Sản Phẩm', 'Số Lượng', 'Người', 'Ghi Chú', 'Page']];
+            
+            const pageTransactions = transactions
+                .filter(t => t.page === currentPage)
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+            pageTransactions.forEach(trans => {
+                const product = products.find(p => p.id === trans.product_id);
+                const time = new Date(trans.timestamp).toLocaleString('vi-VN');
+                const type = trans.type === 'nhap' ? 'Nhập về' : 'Cấp phát';
+                
+                lichsuData.push([
+                    time,
+                    type,
+                    product ? product.name : 'N/A',
+                    trans.quantity,
+                    trans.user || 'N/A',
+                    trans.note || '',
+                    trans.page
+                ]);
+            });
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            const ws1 = XLSX.utils.aoa_to_sheet(tonkhoData);
+            const ws2 = XLSX.utils.aoa_to_sheet(lichsuData);
+            
+            ws1['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 12 }, { wch: 10 }];
+            ws2['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 30 }, { wch: 12 }, { wch: 20 }, { wch: 40 }, { wch: 10 }];
+            
+            XLSX.utils.book_append_sheet(wb, ws1, 'Tồn Kho');
+            XLSX.utils.book_append_sheet(wb, ws2, 'Lịch Sử');
+            
+            const now = new Date();
+            const filename = `XuatNhapHang_${currentPage}_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}.xlsx`;
+            
+            XLSX.writeFile(wb, filename);
+            showToast('success', 'Đã export Excel thành công!');
+        }
+        
+        function exportCSV() {
+            let csv = 'TỒN KHO\n';
+            csv += 'Sản Phẩm,Đơn Vị,Tồn Kho,Page\n';
+            
+            const pageInventory = inventory[currentPage] || {};
+            products.forEach(product => {
+                if (product.page === currentPage) {
+                    const qty = pageInventory[product.id] || 0;
+                    csv += `${product.name},${product.unit},${qty},${product.page}\n`;
+                }
+            });
+            
+            csv += '\nLỊCH SỬ XUẤT NHẬP\n';
+            csv += 'Ngày Giờ,Loại,Sản Phẩm,Số Lượng,Người,Ghi Chú,Page\n';
+            
+            const pageTransactions = transactions
+                .filter(t => t.page === currentPage)
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+            pageTransactions.forEach(trans => {
+                const product = products.find(p => p.id === trans.product_id);
+                const time = new Date(trans.timestamp).toLocaleString('vi-VN');
+                const type = trans.type === 'nhap' ? 'Nhập về' : 'Cấp phát';
+                
+                csv += `${time},${type},${product ? product.name : 'N/A'},${trans.quantity},${trans.user || 'N/A'},"${trans.note || ''}",${trans.page}\n`;
+            });
+            
+            // Create and download
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const now = new Date();
+            const filename = `XuatNhapHang_${currentPage}_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}.csv`;
+            
+            link.href = url;
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showToast('success', 'Đã export CSV thành công!');
+        }
+
         }
 
         // Modal Functions
@@ -1823,8 +2089,8 @@
             const messageEl = document.getElementById('toast-message');
             
             toast.className = 'toast show toast-' + type;
-            messageEl.textContent = message;
             
+            // Set icon
             switch(type) {
                 case 'success':
                     icon.textContent = '✅';
@@ -1836,6 +2102,10 @@
                     icon.textContent = 'ℹ️';
                     break;
             }
+            
+            // Clean message - remove duplicate emoji
+            const cleanMessage = message.replace(/^[✅❌ℹ️]\s*/, '');
+            messageEl.textContent = cleanMessage;
             
             setTimeout(() => {
                 toast.classList.remove('show');
