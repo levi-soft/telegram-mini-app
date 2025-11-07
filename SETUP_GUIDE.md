@@ -9,29 +9,22 @@ Hướng dẫn setup với n8n phiên bản mới nhất.
 
 ---
 
-## 🎯 Architecture Đơn Giản
+## 🎯 Architecture
 
 ```
 Telegram Mini App
     ↓
-┌─────────────────────────────────────┐
-│ n8n Workflows                       │
-│                                     │
-│ Webhook "app" → HTML → Respond      │ (Frontend)
-│                                     │
-│ Webhook "api-get" → Switch → Query  │ (API GET)
-│                                     │
-│ Webhook "api-post" → Switch → Insert│ (API POST)
-└─────────────────────────────────────┘
+n8n Workflows
+    ├─ Webhook "app" (GET) → HTML → Respond (Frontend)
+    ├─ Webhook "api" (GET) → Auth → Switch → Query (API GET)
+    └─ Webhook "api" (POST) → Auth → Switch → Insert (API POST)
          ↓
-   Data Tables
+   Data Tables (products, transactions, allowed_users)
 ```
-
-**Lý do tách riêng:** n8n webhook chỉ chọn được 1 HTTP method
 
 ---
 
-## 🚀 Setup Trong 4 Bước
+## 🚀 Setup Trong 5 Bước
 
 ### BƯỚC 1: Tạo Data Tables
 
@@ -53,8 +46,6 @@ Click **Create Table** → Tên: `products`
 Bàn phím cơ | Cái | Gaming keyboard | RR88
 Chuột máy tính | Cái | Wired mouse | RR88
 Tai nghe | Cái | Bluetooth | XX88
-USB 32GB | Cái | Kingston | XX88
-Balo laptop | Cái | 15 inch | MM88
 ```
 
 #### 1.2. Table "transactions"
@@ -67,36 +58,143 @@ Click **Create Table** → Tên: `transactions`
 - `quantity` - Number - Required
 - `note` - Text - Optional
 - `page` - Text - Required
-- `user` - Text - Required (first_name từ Telegram)
+- `user` - Text - Required (first_name từ Telegram - real-time)
 - `timestamp` - Date - Auto
 
 #### 1.3. Table "allowed_users" (Whitelist)
 
 Click **Create Table** → Tên: `allowed_users`
 
-**Columns:**
-- `telegram_id` - Number - Required (Telegram user ID)
-- `first_name` - Text - Required
-- `username` - Text - Optional
-- `pages` - Text - Required (Comma-separated: RR88,XX88,MM88)
-- `role` - Text - Optional (admin, user, viewer)
+**Columns (Simplified):**
+- `telegram_id` - Number - Required - Primary Key
+- `pages` - Text - Required
+- `role` - Text - Optional (for future use)
 - `active` - Boolean - Default: true
 - `created_at` - Date - Auto
 
-**Sample data để test:**
+**Lưu ý Quan Trọng:**
+- ❌ **KHÔNG** lưu `first_name` hay `username` (user có thể đổi bất cứ lúc nào)
+- ✅ **CHỈ** lưu `telegram_id` (immutable - không đổi)
+- ✅ `first_name` lấy **real-time** từ Telegram WebApp khi người dùng app
+
+---
+
+### 📋 Phân Quyền Linh Hoạt
+
+#### Field "pages" - Chi Tiết
+
+**Format:** Comma-separated (không khoảng trắng)
+
+**Các Trường Hợp:**
+
+**1. Full Access - Cả 3 Pages:**
 ```
 telegram_id: 123456789
-first_name: Admin User
-username: admin_user
 pages: RR88,XX88,MM88
 role: admin
 active: true
 ```
+→ User access được cả 3 pages, tự do switch
 
-**Lấy Telegram ID:**
-- Mở app lần đầu, check n8n logs
-- Hoặc dùng bot @userinfobot để lấy ID
-- Add vào table này để cho phép access
+**2. Single Page - Chỉ 1 Page:**
+```
+telegram_id: 987654321
+pages: RR88
+role: user
+active: true
+```
+→ Chỉ làm việc với RR88
+
+**3. Two Pages - 2 Pages:**
+```
+telegram_id: 555666777
+pages: XX88,MM88
+role: user
+active: true
+```
+→ Làm việc với XX88 và MM88, không thấy RR88
+
+**4. Custom Combination:**
+```
+telegram_id: 111222333
+pages: RR88,MM88
+role: user
+active: true
+```
+→ Access RR88 và MM88, skip XX88
+
+#### Field "role" - Vai Trò (Future)
+
+**Hiện tại:** Chỉ để note, chưa dùng logic
+
+**Gợi ý values:**
+- `admin` - Quản trị
+- `user` - Người dùng
+- `viewer` - Chỉ xem (future)
+
+#### Field "active" - Bật/Tắt
+
+- `true` → Cho phép access
+- `false` → Block (nhân viên nghỉ, vi phạm, etc.)
+
+---
+
+### 💡 Ví Dụ Real-World
+
+**Case 1: IT Manager**
+```
+telegram_id: 111111111
+pages: RR88,XX88,MM88
+role: admin
+active: true
+```
+→ Quản lý toàn bộ, full access
+
+**Case 2: RR88 Warehouse Staff**
+```
+telegram_id: 222222222
+pages: RR88
+role: user
+active: true
+```
+→ Chỉ quản lý kho RR88
+
+**Case 3: Multi-Warehouse Staff**
+```
+telegram_id: 333333333
+pages: RR88,XX88
+role: user
+active: true
+```
+→ Quản lý 2 kho: RR88 và XX88
+
+**Case 4: Temporary Block**
+```
+telegram_id: 444444444
+pages: RR88,XX88,MM88
+role: user
+active: false
+```
+→ Tạm khóa (đã nghỉ việc, suspend, etc.)
+
+---
+
+### 🆔 Lấy Telegram ID
+
+**Cách 1: Unauthorized Screen**
+- User mở app lần đầu
+- App hiện: "Telegram ID của bạn: 123456789"
+- User copy ID này
+
+**Cách 2: @userinfobot**
+- User chat với @userinfobot
+- Bot reply với user info
+- Copy ID
+
+**Cách 3: n8n Logs**
+- User mở app
+- Admin check n8n webhook executions
+- Xem user_id trong query params
 
 ---
 
@@ -111,95 +209,60 @@ active: true
 - HTTP Method: **GET**
 - Path: **app**
 - Respond: **Immediately**
-- Response Mode: **Last Node**
 
 #### 2.3. Add HTML Node
 
-- Copy [`XuatNhapHang.html`](XuatNhapHang.html:1)
-- Paste vào **HTML Content**
+Copy [`XuatNhapHang.html`](XuatNhapHang.html:1) vào HTML Content
 
 #### 2.4. Update Config trong HTML
 
-Tìm và sửa:
 ```javascript
 const CONFIG = {
-    N8N_WEBHOOK_URL: 'https://n8n.tayninh.cloud/webhook',
+    N8N_WEBHOOK_URL: 'https://your-domain/webhook',
     API_PATH: 'api',
 };
 ```
 
-Thay `n8n.tayninh.cloud` bằng domain n8n của bạn.
-
 #### 2.5. Add Respond Node
 
-- Respond With: **Text**
 - Response Body: `{{ $json.html }}`
 - Headers: `Content-Type: text/html; charset=utf-8`
 
 #### 2.6. Save & Activate
 
-**Frontend URL:** `https://your-n8n.app/webhook/app`
-
 ---
 
-### BƯỚC 3: Workflow API - GET Requests
+### BƯỚC 3: Workflow API GET (With Auth)
 
 #### 3.1. Tạo Workflow
 
 **Name:** `XuatNhapHang-API-GET`
 
-#### 3.2. Add Webhook Node
+#### 3.2. Webhook Node
 
 - HTTP Method: **GET**
 - Path: **api**
-- Respond: **Using 'Respond to Webhook' Node**
 
-#### 3.3. Add Code Node - Check Authentication
+#### 3.3. Get Many - Check Whitelist
 
-Add **Code** node sau Webhook:
-```javascript
-const query = $json.query;
-const headers = $json.headers;
-
-// Get Telegram user ID from header (Telegram WebApp sends this)
-const telegramData = headers['x-telegram-init-data'] || '';
-const userId = query.user_id; // Hoặc parse từ init data
-
-// Pass data forward với user info
-return [{
-  json: {
-    ...($json),
-    auth: {
-      user_id: userId || null,
-      authenticated: false  // Will check in next node
-    }
-  }
-}];
-```
-
-**Lưu ý:** Telegram WebApp gửi user info trong headers, cần parse để lấy user_id
-
-#### 3.4. Add Get Many - Check Whitelist
-
-Add **Get Many** node:
 - Table: **allowed_users**
-- Return All: **ON**
-- Filter: `telegram_id` **Equal** `{{ $json.auth.user_id }}`
+- Filter: `telegram_id` Equal `{{ $json.query.user_id }}`
 
-#### 3.5. Add IF - Is Authorized
+#### 3.4. IF - Check Authorized
 
 Add **IF** node:
+- Mode: **Custom**
+- Expression:
 ```javascript
-// Check if user found in whitelist
-const users = $input.all();
-return users.length > 0 && users[0].json.active === true;
+{{ $input.all().length > 0 && $input.first().json.active === true }}
 ```
 
-**TRUE BRANCH:** User authorized → Continue to Switch
+**TRUE → Authorized**
+**FALSE → Unauthorized**
 
-**FALSE BRANCH:** Unauthorized → Return error
+#### 3.5. FALSE Branch - Return Error
 
-Add **Code** node (Unauthorized response):
+Add **Code** node:
 ```javascript
 return [{
   json: {
@@ -212,66 +275,21 @@ return [{
 
 → **Respond to Webhook**
 
----
+#### 3.6. TRUE Branch - Add Switch Node
 
-#### 3.6. Add Switch Node (Authorized users only)
+Add **Switch** với 3 rules:
+- `{{ $json.query.endpoint }}` Equal `products`
+- `{{ $json.query.endpoint }}` Equal `transactions`
+- `{{ $json.query.endpoint }}` Equal `inventory`
 
-Click **+** → **Switch**
+**Output 0 - GET Products:**
+Get Many → Format → Respond
 
-**Mode:** Rules
+**Output 1 - GET Transactions:**
+Get Many → Format (include user) → Respond
 
-**Add 3 Rules:**
-
-**Rule 1 - Products:**
-- Value 1: `{{ $json.query.endpoint }}`
-- Operation: **Equal**
-- Value 2: `products`
-
-**Rule 2 - Transactions:**
-- Value 1: `{{ $json.query.endpoint }}`
-- Operation: **Equal**
-- Value 2: `transactions`
-
-**Rule 3 - Inventory:**
-- Value 1: `{{ $json.query.endpoint }}`
-- Operation: **Equal**
-- Value 2: `inventory`
-
-#### 3.4. Output 0 - GET Products
-
-Switch output 0 → **Get Many** node:
-- Table: **products**
-- Return All: **ON**
-- Filter:
-  - Field: `page`
-  - Operator: **Equal**
-  - Value: `{{ $json.query.page }}`
-- Sort: `name` **ASC**
-
-→ **Code** node (Format):
+Format code:
 ```javascript
-return [{
-  json: {
-    success: true,
-    data: $input.all().map(i => i.json)
-  }
-}];
-```
-
-→ **Respond to Webhook**
-
-#### 3.5. Output 1 - GET Transactions
-
-Switch output 1 → **Get Many** node:
-- Table: **transactions**
-- Return All: **ON**
-- Filter: `page` **Equal** `{{ $json.query.page }}`
-- Sort: `timestamp` **DESC**
-- Limit: **100**
-
-→ **Code** node (Format response):
-```javascript
-// Format và ensure tất cả fields được include
 const transactions = $input.all().map(item => {
   const t = item.json;
   return {
@@ -281,7 +299,7 @@ const transactions = $input.all().map(item => {
     quantity: t.quantity,
     note: t.note || '',
     page: t.page,
-    user: t.user || 'Unknown',  // ← Quan trọng!
+    user: t.user || 'Unknown',
     timestamp: t.timestamp
   };
 });
@@ -294,356 +312,63 @@ return [{
 }];
 ```
 
-→ **Respond to Webhook**
-
-#### 3.6. Output 2 - GET Inventory
-
-Switch output 2 → **Get Many** node:
-- Table: **transactions**
-- Filter: `page` **Equal** `{{ $json.query.page }}`
-
-→ **Code** (Calculate):
-```javascript
-const transactions = $input.all();
-const inventory = {};
-
-transactions.forEach(item => {
-  const t = item.json;
-  const productId = t.product_id;
-  
-  if (!inventory[productId]) {
-    inventory[productId] = 0;
-  }
-  
-  if (t.type === 'nhap') {
-    inventory[productId] += parseInt(t.quantity);
-  } else {
-    inventory[productId] -= parseInt(t.quantity);
-  }
-});
-
-const result = Object.entries(inventory).map(([id, qty]) => ({
-  product_id: parseInt(id),
-  quantity: qty
-}));
-
-return [{
-  json: {
-    success: true,
-    data: result
-  }
-}];
-```
-
-→ **Respond to Webhook**
+**Output 2 - GET Inventory:**
+Get Transactions → Calculate → Respond
 
 #### 3.7. Save & Activate
 
 ---
 
-### BƯỚC 4: Workflow API - POST Requests
+### BƯỚC 4: Workflow API POST (With Auth)
 
 #### 4.1. Tạo Workflow
 
 **Name:** `XuatNhapHang-API-POST`
 
-#### 4.2. Add Webhook Node
+#### 4.2. Webhook + Auth
 
-- HTTP Method: **POST**
-- Path: **api** (same path as GET)
-- Respond: **Using 'Respond to Webhook' Node**
+Same as GET workflow (steps 3.2-3.5)
 
-#### 4.3. Add Switch Node
+#### 4.3. Switch (Authorized users only)
 
-Same as GET workflow:
-- 3 rules theo `endpoint` parameter
+**Output 0 - POST Product (Update by Name):**
 
-#### 4.4. Output 0 - POST Product (Create/Update by Name)
-
-**Flow:**
+Flow:
 ```
-Switch output 0 → Code (Validate) → Get Many (Find by name) → IF (Exists?)
-                                                               ├─ Yes → Update
-                                                               └─ No → Insert
+Validate → Get Existing (by name+page) → Merge → IF (exists?) 
+                                                  ├─ Update
+                                                  └─ Insert
 ```
 
-**Node 1: Code - Validate & Prepare**
+7 nodes total (xem phần 4.4 trong guide)
 
-Add **Code** node:
-```javascript
-const body = $json.body;
+**Output 1 - POST Transaction:**
 
-// Validate required fields
-if (!body.name || !body.unit || !body.page) {
-  throw new Error('Thiếu thông tin bắt buộc');
-}
-
-// Prepare product data
-return [{
-  json: {
-    name: body.name,
-    unit: body.unit,
-    description: body.description || '',
-    page: body.page
-  }
-}];
+Flow:  
+```
+Validate → IF (type=xuat?) 
+           ├─ Get Trans → Calculate → Check → Insert
+           └─ Insert directly
 ```
 
-**Node 2: Get Many - Check Existing**
+7 nodes total (xem phần 4.5 trong guide)
 
-Add **Get Many** node:
-- Table: **products**
-- Return All: **ON**
-- Filters:
-  - Field: `name` **Equal** `{{ $json.name }}`
-  - **AND** Field: `page` **Equal** `{{ $json.page }}`
-
-**Node 3: Code - Merge Data**
-
-Add **Code** node:
-```javascript
-const newData = $('Code').item.json; // Data mới từ form
-const existing = $input.all(); // Kết quả query
-
-// Nếu tìm thấy existing product
-if (existing.length > 0) {
-  const existingProduct = existing[0].json;
-  return [{
-    json: {
-      ...newData,
-      id: existingProduct.id,  // Giữ ID cũ
-      isUpdate: true
-    }
-  }];
-}
-
-// Nếu không tìm thấy - product mới
-return [{
-  json: {
-    ...newData,
-    isUpdate: false
-  }
-}];
-```
-
-**Node 4: IF - Check Is Update**
-
-Add **IF** node:
-- Condition: `{{ $json.isUpdate }}` **Equal** `true`
+#### 4.4. Save & Activate
 
 ---
 
-**TRUE BRANCH (Update existing):**
-
-**Node 5a: Update**
-
-Add **Update** node:
-- Table: **products**
-- Update Mode: **Update One**
-- Filter to Find Row:
-  - Field: `id` **Equal** `{{ $json.id }}`
-- Fields to Update:
-  - `name`: `{{ $json.name }}`
-  - `unit`: `{{ $json.unit }}`
-  - `description`: `{{ $json.description }}`
-
-**FALSE BRANCH (Insert new):**
-
-**Node 5b: Insert**
-
-Add **Insert** node:
-- Table: **products**
-- Data to Insert: `{{ $json }}`
-
----
-
-**Both Branches → Node 6: Format Response**
-
-Add **Code** node:
-```javascript
-return [{
-  json: {
-    success: true,
-    message: 'Lưu sản phẩm thành công',
-    data: $json
-  }
-}];
-```
-
-**Node 7: Respond to Webhook**
-
-**Tổng kết:**
-```
-Validate → Get Existing (by name+page) → Merge → IF (exists?)
-                                                  ├─ Yes → Update → Respond
-                                                  └─ No → Insert → Respond
-```
-
-**Lợi ích:**
-- ✅ Tránh duplicate products với cùng tên
-- ✅ Update tự động nếu sản phẩm đã tồn tại
-- ✅ User chỉ cần sửa và save, không cần quan tâm create/update
-
-#### 4.5. Output 1 - POST Transaction (Chi Tiết Từng Node)
-
-**Flow overview:**
-```
-Switch output 1 → Code (Validate) → IF (Check type)
-                                    ├─ True (xuat) → Get Trans → Calculate → IF (Check inventory) → Insert
-                                    └─ False (nhap) → Insert directly
-```
-
-**Node 1: Code - Validate & Prepare**
-
-Add **Code** node:
-```javascript
-const body = $json.body;
-
-// Validate required fields
-if (!body.type || !body.product_id || !body.quantity) {
-  throw new Error('Thiếu thông tin bắt buộc');
-}
-
-if (!body.page || !body.user) {
-  throw new Error('Thiếu page hoặc user');
-}
-
-if (!['nhap', 'xuat'].includes(body.type)) {
-  throw new Error('Loại không hợp lệ');
-}
-
-// Prepare data để insert
-return [{
-  json: {
-    type: body.type,
-    product_id: parseInt(body.product_id),
-    quantity: parseInt(body.quantity),
-    note: body.note || '',
-    page: body.page,
-    user: body.user  // First name từ Telegram
-  }
-}];
-```
-
-**Node 2: IF - Check Type**
-
-Add **IF** node:
-- Condition: `{{ $json.type }}` **Equal** `xuat`
-
----
-
-**TRUE BRANCH (xuat - cần check tồn kho):**
-
-**Node 3a: Get Many - Query Transactions**
-
-Add **Get Many** node:
-- Table: **transactions**
-- Return All: **ON**
-- Filters:
-  - Field: `page` Equal `{{ $json.page }}`
-  - **AND** Field: `product_id` Equal `{{ $json.product_id }}`
-
-**Node 4a: Code - Calculate Inventory**
-
-```javascript
-const newTransaction = $('Code').item.json; // Transaction mới
-const existingTrans = $input.all().map(i => i.json);
-
-// Tính tồn kho hiện tại
-let currentInventory = 0;
-
-existingTrans.forEach(t => {
-  if (t.type === 'nhap') {
-    currentInventory += parseInt(t.quantity);
-  } else if (t.type === 'xuat') {
-    currentInventory -= parseInt(t.quantity);
-  }
-});
-
-// Check đủ hàng không
-const requestedQty = newTransaction.quantity;
-
-if (currentInventory < requestedQty) {
-  throw new Error(`Không đủ hàng! Tồn kho: ${currentInventory}, Yêu cầu: ${requestedQty}`);
-}
-
-// OK → Trả về transaction để insert
-return [{
-  json: newTransaction
-}];
-```
-
-**Node 5a: Insert - Save Transaction**
-
-Add **Insert** node:
-- Table: **transactions**
-- Data to Insert: `{{ $json }}`
-
-→ Go to **Node 6: Format Response** (skip to end)
-
----
-
-**FALSE BRANCH (nhap - không cần check):**
-
-**Node 3b: Insert - Save Directly**
-
-Add **Insert** node:
-- Table: **transactions**
-- Data to Insert: `{{ $json }}`
-
-→ Go to **Node 6: Format Response**
-
----
-
-**Node 6: Format Response (Merge point)**
-
-Add **Code** node:
-```javascript
-return [{
-  json: {
-    success: true,
-    message: 'Thành công',
-    data: $json
-  }
-}];
-```
-
-**Node 7: Respond to Webhook**
-
-Add **Respond to Webhook** node
-
----
-
-**Tổng kết flow:**
-```
-Validate → IF (type = xuat?)
-           ├─ Yes → Get Transactions → Calculate → Check → Insert → Format → Respond
-           └─ No → Insert → Format → Respond
-```
-
-#### 4.6. Save & Activate
-
----
-
-### BƯỚC 5: Setup Telegram Bot
+### BƯỚC 5: Telegram Bot Setup
 
 #### 5.1. Tạo Bot
 
-@BotFather:
-```
-/newbot
-Bot name: Xuất Nhập Hàng Bot
-Username: xuatnhaphang_bot
-```
+@BotFather → `/newbot`
 
 #### 5.2. Setup Mini App
 
 ```
 /newapp
-
 Title: Xuất Nhập Hàng
-Description: Quản lý nhập về và cấp phát
-Web App URL: https://your-n8n.app/webhook/app
+URL: https://your-n8n.app/webhook/app
 ```
 
 #### 5.3. Set Menu Button
@@ -658,177 +383,72 @@ URL: https://your-n8n.app/webhook/app
 
 ## ✅ Testing
 
-### Test GET Products
+### Add User Vào Whitelist
 
-```bash
-curl "https://n8n.tayninh.cloud/webhook/api?endpoint=products&page=RR88"
+n8n → Data Tables → allowed_users → Add Row:
+```
+telegram_id: 123456789
+pages: RR88,XX88,MM88
+role: admin
+active: true
 ```
 
-Expected webhook data:
-```json
-{
-  "query": {
-    "endpoint": "products",
-    "page": "RR88"
-  },
-  "body": {}
-}
-```
+**Lưu ý:** Không cần điền first_name hay username!
 
-### Test POST Product
+### Test Access
 
-```bash
-curl -X POST "https://n8n.tayninh.cloud/webhook/api?endpoint=products" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test","unit":"Cái","page":"RR88"}'
-```
-
-Expected body:
-```json
-{
-  "query": { "endpoint": "products" },
-  "body": {
-    "name": "Test",
-    "unit": "Cái",
-    "page": "RR88"
-  }
-}
-```
-
-### Test POST Transaction
-
-```bash
-curl -X POST "https://n8n.tayninh.cloud/webhook/api?endpoint=transactions" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type":"nhap",
-    "product_id":1,
-    "quantity":50,
-    "page":"RR88",
-    "user":"Nguyễn Văn A"
-  }'
-```
+1. User mở app
+2. Nếu không trong whitelist:
+   - Thấy unauthorized screen
+   - Hiển thị Telegram ID
+   - Button "Liên Hệ Admin" → https://t.me/PinusITRR88
+3. User gửi ID cho admin
+4. Admin add vào whitelist
+5. User reload → Access! ✅
 
 ---
 
-## 🎯 Workflow Architecture (Correct)
+## 🔍 Debug Tips
 
-### 3 Separate Workflows
+### Check Whitelist
 
-**1. Frontend Workflow:**
+Query trong n8n:
 ```
-Webhook GET (path: app) → HTML → Respond
-```
-
-**2. API GET Workflow:**
-```
-Webhook GET (path: api)
-    ↓
-Switch (endpoint parameter)
-    ├─ Output 0: products → Get Many → Format → Respond
-    ├─ Output 1: transactions → Get Many → Format → Respond
-    └─ Output 2: inventory → Get Many → Calculate → Respond
+Table: allowed_users
+Filter: telegram_id = 123456789
 ```
 
-**3. API POST Workflow:**
-```
-Webhook POST (path: api)
-    ↓
-Switch (endpoint parameter)
-    ├─ Output 0: products → Validate → Insert → Respond
-    └─ Output 1: transactions → Validate → Check → Insert → Respond
-```
+Nếu found && active = true → Should work
 
-### Why This Way?
+### Check Permissions
 
-- ✅ Webhook chỉ chọn 1 method
-- ✅ Không có `$json.method` field
-- ✅ GET và POST tự nhiên phân biệt qua webhook nodes
-- ✅ Switch chỉ cần route theo `endpoint`
-- ✅ Không cần Merge, không cần IF check method
+User chỉ thấy pages được phép:
+- `pages: RR88` → Chỉ thấy button RR88
+- `pages: RR88,XX88,MM88` → Thấy cả 3 buttons
 
 ---
 
-## 📊 Webhook Data Structure
+## 📊 Summary
 
-### GET Request
-```json
-{
-  "headers": {...},
-  "query": {
-    "endpoint": "products",
-    "page": "RR88"
-  },
-  "body": {}
-}
-```
+**3 Workflows:**
+1. Frontend (GET app)
+2. API GET (with auth check)
+3. API POST (with auth check)
 
-**Access data:**
-- Endpoint: `{{ $json.query.endpoint }}`
-- Page: `{{ $json.query.page }}`
+**3 Data Tables:**
+1. products
+2. transactions
+3. allowed_users (chỉ telegram_id + permissions)
 
-### POST Request
-```json
-{
-  "headers": {...},
-  "query": {
-    "endpoint": "products"
-  },
-  "body": {
-    "name": "Test",
-    "unit": "Cái",
-    "page": "RR88"
-  }
-}
-```
+**User Flow:**
+1. Mở app → Check whitelist
+2. Authorized → Use app
+3. Unauthorized → Contact @PinusITRR88 → Get added → Access!
 
-**Access data:**
-- Endpoint: `{{ $json.query.endpoint }}`
-- Body data: `{{ $json.body.name }}`
+**Setup Time:** 40-50 phút
 
 ---
 
-## 🐛 Troubleshooting
-
-### Switch không route đúng
-- Check: `{{ $json.query.endpoint }}` (không phải `$json.endpoint`)
-- Check: Value chính xác (products, transactions, inventory)
-
-### Không get được data
-- Check: Dùng `{{ $json.query.page }}` (không phải `$json.page`)
-- Check: Webhook GET active
-- Check: Filter trong Get Many node đúng
-
-### POST không save
-- Check: Dùng `{{ $json.body.name }}` để access body data
-- Check: Webhook POST active
-- Check: Validation logic đúng
-
----
-
-## ✅ Checklist
-
-- [ ] Data Tables: products, transactions
-- [ ] Frontend workflow (path: app, GET)
-- [ ] API GET workflow (path: api, GET)
-  - [ ] Switch with 3 outputs
-  - [ ] Get Many nodes for each output
-  - [ ] Respond nodes
-- [ ] API POST workflow (path: api, POST)
-  - [ ] Switch with 2 outputs
-  - [ ] Validate → Insert logic
-  - [ ] Respond nodes
-- [ ] Config updated in HTML
-- [ ] Telegram bot created
-- [ ] Tested with curl
-- [ ] Tested on Telegram app
-
----
-
-**Version:** 2.1.3  
+**Version:** 2.2.0  
 **Updated:** 2025-11-07  
-**Fixed:**
-- Removed Merge node (không cần)
-- Removed IF nodes checking method (không có $json.method)
-- Use 3 separate workflows (cleaner)
-- Correct data access: $json.query.endpoint, $json.body.xxx
+**Contact Admin:** https://t.me/PinusITRR88
