@@ -956,6 +956,7 @@
         // Telegram WebApp
         let tg = window.Telegram?.WebApp;
         let currentUser = 'Unknown';
+        let currentUserId = null;
         
         if (tg) {
             tg.ready();
@@ -966,6 +967,7 @@
             const user = tg.initDataUnsafe?.user;
             if (user) {
                 currentUser = user.first_name || user.username || 'Unknown';
+                currentUserId = user.id; // Telegram user ID
             }
         }
 
@@ -1083,18 +1085,58 @@
                     });
                 }
 
-                const response = await fetch(`${CONFIG.N8N_WEBHOOK_URL}/${CONFIG.API_PATH}?endpoint=${endpoint}&page=${currentPage}`, options);
+                // Include user_id in URL for authentication
+                const url = `${CONFIG.N8N_WEBHOOK_URL}/${CONFIG.API_PATH}?endpoint=${endpoint}&page=${currentPage}&user_id=${currentUserId}`;
+                const response = await fetch(url, options);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const result = await response.json();
+                
+                // Check for unauthorized
+                if (result.success === false && result.error === 'Unauthorized') {
+                    handleUnauthorized(result.message);
+                    throw new Error('Unauthorized');
+                }
+                
                 return result;
             } catch (error) {
                 logError('API Call Error', error);
                 throw error;
             }
+        }
+        
+        function handleUnauthorized(message) {
+            // Hide loading
+            hideLoading();
+            
+            // Show unauthorized message
+            document.querySelector('.content').innerHTML = `
+                <div class="card" style="text-align: center; padding: 40px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+                    <h2 style="margin-bottom: 16px;">Không Có Quyền Truy Cập</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                        ${message || 'Bạn không có quyền sử dụng ứng dụng này.'}
+                    </p>
+                    <p style="font-size: 14px; color: var(--text-secondary);">
+                        Liên hệ Admin để được cấp quyền.<br>
+                        Telegram ID của bạn: <strong>${currentUserId || 'N/A'}</strong>
+                    </p>
+                </div>
+            `;
+            
+            // Disable navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+            });
+            
+            document.querySelectorAll('.page-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+            });
         }
 
 

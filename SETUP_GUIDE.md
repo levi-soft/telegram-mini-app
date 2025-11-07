@@ -70,6 +70,34 @@ Click **Create Table** → Tên: `transactions`
 - `user` - Text - Required (first_name từ Telegram)
 - `timestamp` - Date - Auto
 
+#### 1.3. Table "allowed_users" (Whitelist)
+
+Click **Create Table** → Tên: `allowed_users`
+
+**Columns:**
+- `telegram_id` - Number - Required (Telegram user ID)
+- `first_name` - Text - Required
+- `username` - Text - Optional
+- `pages` - Text - Required (Comma-separated: RR88,XX88,MM88)
+- `role` - Text - Optional (admin, user, viewer)
+- `active` - Boolean - Default: true
+- `created_at` - Date - Auto
+
+**Sample data để test:**
+```
+telegram_id: 123456789
+first_name: Admin User
+username: admin_user
+pages: RR88,XX88,MM88
+role: admin
+active: true
+```
+
+**Lấy Telegram ID:**
+- Mở app lần đầu, check n8n logs
+- Hoặc dùng bot @userinfobot để lấy ID
+- Add vào table này để cho phép access
+
 ---
 
 ### BƯỚC 2: Workflow Frontend
@@ -126,7 +154,67 @@ Thay `n8n.tayninh.cloud` bằng domain n8n của bạn.
 - Path: **api**
 - Respond: **Using 'Respond to Webhook' Node**
 
-#### 3.3. Add Switch Node
+#### 3.3. Add Code Node - Check Authentication
+
+Add **Code** node sau Webhook:
+```javascript
+const query = $json.query;
+const headers = $json.headers;
+
+// Get Telegram user ID from header (Telegram WebApp sends this)
+const telegramData = headers['x-telegram-init-data'] || '';
+const userId = query.user_id; // Hoặc parse từ init data
+
+// Pass data forward với user info
+return [{
+  json: {
+    ...($json),
+    auth: {
+      user_id: userId || null,
+      authenticated: false  // Will check in next node
+    }
+  }
+}];
+```
+
+**Lưu ý:** Telegram WebApp gửi user info trong headers, cần parse để lấy user_id
+
+#### 3.4. Add Get Many - Check Whitelist
+
+Add **Get Many** node:
+- Table: **allowed_users**
+- Return All: **ON**
+- Filter: `telegram_id` **Equal** `{{ $json.auth.user_id }}`
+
+#### 3.5. Add IF - Is Authorized
+
+Add **IF** node:
+```javascript
+// Check if user found in whitelist
+const users = $input.all();
+return users.length > 0 && users[0].json.active === true;
+```
+
+**TRUE BRANCH:** User authorized → Continue to Switch
+
+**FALSE BRANCH:** Unauthorized → Return error
+
+Add **Code** node (Unauthorized response):
+```javascript
+return [{
+  json: {
+    success: false,
+    error: 'Unauthorized',
+    message: 'Bạn không có quyền sử dụng ứng dụng này'
+  }
+}];
+```
+
+→ **Respond to Webhook**
+
+---
+
+#### 3.6. Add Switch Node (Authorized users only)
 
 Click **+** → **Switch**
 

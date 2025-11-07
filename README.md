@@ -409,13 +409,18 @@ console.log(user.id);
 
 **Made with ❤️ for efficient inventory management**
 
-**Version:** 2.1.0  
-**Last Updated:** 2025-11-06
+**Version:** 2.2.0
+**Last Updated:** 2025-11-07
+
+### Changelog v2.2.0
+- ✅ **User whitelist authentication** - Giới hạn người dùng
+- ✅ allowed_users Data Table - Quản lý access
+- ✅ Unauthorized screen - Hiện Telegram ID để request access
+- ✅ Toast position fix - Không che page buttons
+- ✅ Stats grid responsive - 2x2 trên mobile
+- ✅ Product update by name - Tránh duplicate
 
 ### Changelog v2.1.0
-- ✅ Webhook paths: "app" & "api"
-- ✅ Bỏ SQL, dùng n8n Data Table UI
-- ✅ Auto first_name tracking từ Telegram
-- ✅ Hiển thị tên người trong lịch sử
-- ✅ Simplified setup (20-30 phút)
-- ✅ Production-ready
+- Webhook paths: "app" & "api"
+- Auto first_name tracking
+- n8n Data Table integration
