@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Xuất Nhập Hàng - RR88/XX88/MM88</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -857,6 +858,10 @@
             <div class="section" id="tonkho">
                 <div class="card">
                     <div class="card-title">📋 Tồn Kho Hiện Tại</div>
+                    <button class="btn btn-secondary btn-sm" onclick="exportExcel()" style="margin-bottom: 16px; width: auto;">
+                        <span>📊</span>
+                        <span>Export Excel (Tồn Kho + Lịch Sử)</span>
+                    </button>
                     <div class="search-box">
                         <input type="text" class="search-input" id="search-tonkho" placeholder="Tìm kiếm sản phẩm...">
                         <span class="search-icon">🔍</span>
@@ -1868,6 +1873,100 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(errorLog),
             }).catch(() => {}); // Silent fail for logging
+        }
+
+        // Export to Excel Function
+        function exportExcel() {
+            try {
+                // Prepare data for Sheet 1 - Tồn Kho
+                const pageInventory = inventory[currentPage] || {};
+                const tonkhoData = [];
+                
+                // Header row
+                tonkhoData.push(['Sản Phẩm', 'Đơn Vị', 'Tồn Kho', 'Page']);
+                
+                // Data rows
+                products.forEach(product => {
+                    if (product.page === currentPage) {
+                        const qty = pageInventory[product.id] || 0;
+                        tonkhoData.push([
+                            product.name,
+                            product.unit,
+                            qty,
+                            product.page
+                        ]);
+                    }
+                });
+                
+                // Prepare data for Sheet 2 - Lịch Sử
+                const lichsuData = [];
+                
+                // Header row
+                lichsuData.push(['Ngày Giờ', 'Loại', 'Sản Phẩm', 'Số Lượng', 'Người Thực Hiện', 'Ghi Chú', 'Page']);
+                
+                // Data rows
+                const pageTransactions = transactions
+                    .filter(t => t.page === currentPage)
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                pageTransactions.forEach(trans => {
+                    const product = products.find(p => p.id === trans.product_id);
+                    const productName = product ? product.name : 'N/A';
+                    const time = new Date(trans.timestamp).toLocaleString('vi-VN');
+                    const type = trans.type === 'nhap' ? 'Nhập về' : 'Cấp phát';
+                    
+                    lichsuData.push([
+                        time,
+                        type,
+                        productName,
+                        trans.quantity,
+                        trans.user || 'N/A',
+                        trans.note || '',
+                        trans.page
+                    ]);
+                });
+                
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                
+                // Create worksheets
+                const ws1 = XLSX.utils.aoa_to_sheet(tonkhoData);
+                const ws2 = XLSX.utils.aoa_to_sheet(lichsuData);
+                
+                // Set column widths
+                ws1['!cols'] = [
+                    { wch: 30 }, // Sản Phẩm
+                    { wch: 15 }, // Đơn Vị
+                    { wch: 12 }, // Tồn Kho
+                    { wch: 10 }  // Page
+                ];
+                
+                ws2['!cols'] = [
+                    { wch: 20 }, // Ngày Giờ
+                    { wch: 12 }, // Loại
+                    { wch: 30 }, // Sản Phẩm
+                    { wch: 12 }, // Số Lượng
+                    { wch: 20 }, // Người
+                    { wch: 40 }, // Ghi Chú
+                    { wch: 10 }  // Page
+                ];
+                
+                // Add worksheets to workbook
+                XLSX.utils.book_append_sheet(wb, ws1, 'Tồn Kho');
+                XLSX.utils.book_append_sheet(wb, ws2, 'Lịch Sử Xuất Nhập');
+                
+                // Generate filename with timestamp
+                const now = new Date();
+                const filename = `XuatNhapHang_${currentPage}_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.xlsx`;
+                
+                // Download file
+                XLSX.writeFile(wb, filename);
+                
+                showToast('success', '✅ Đã export Excel thành công!');
+            } catch (error) {
+                showToast('error', 'Lỗi export Excel: ' + error.message);
+                logError('Export Excel Error', error);
+            }
         }
 
         // Setup modal listeners (called after DOM ready and authorized)
