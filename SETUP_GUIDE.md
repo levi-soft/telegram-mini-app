@@ -1,6 +1,6 @@
 # 🚀 Setup Guide - Telegram Mini App Xuất Nhập Hàng
 
-Hướng dẫn setup nhanh với n8n Data Tables.
+Hướng dẫn setup với n8n phiên bản mới nhất.
 
 ## 📋 Yêu Cầu
 
@@ -9,23 +9,25 @@ Hướng dẫn setup nhanh với n8n Data Tables.
 
 ---
 
-## 🎯 Architecture
+## 🎯 Architecture Đơn Giản
 
 ```
 Telegram Mini App
     ↓
-┌─────────────────────────────────┐
-│  n8n Workflow                   │
-│                                 │
-│  Webhook "app"  → HTML → Respond│  (Frontend)
-│                                 │
-│  Webhook "api"  → Router        │  (Backend API)
-│                ↓                │
-│         Data Tables             │
-│         ├─ products             │
-│         └─ transactions         │
-└─────────────────────────────────┘
+┌─────────────────────────────────────┐
+│ n8n Workflows                       │
+│                                     │
+│ Webhook "app" → HTML → Respond      │ (Frontend)
+│                                     │
+│ Webhook "api-get" → Switch → Query  │ (API GET)
+│                                     │
+│ Webhook "api-post" → Switch → Insert│ (API POST)
+└─────────────────────────────────────┘
+         ↓
+   Data Tables
 ```
+
+**Lý do tách riêng:** n8n webhook chỉ chọn được 1 HTTP method
 
 ---
 
@@ -33,168 +35,132 @@ Telegram Mini App
 
 ### BƯỚC 1: Tạo Data Tables
 
-Trong n8n, vào **Settings** → **Data Tables**
+Vào n8n → **Settings** → **Data Tables**
 
-#### 1.1. Tạo Table "products"
+#### 1.1. Table "products"
 
-Click **"Create Table"**, đặt tên: `products`
+Click **Create Table** → Tên: `products`
 
 **Columns:**
-```
-name          | Text     | Required
-unit          | Text     | Required
-description   | Text     | Optional
-page          | Text     | Required
-created_at    | Date     | Auto (NOW)
-```
+- `name` - Text - Required
+- `unit` - Text - Required  
+- `description` - Text - Optional
+- `page` - Text - Required
+- `created_at` - Date - Auto
 
 **Sample data:**
 ```
-name: Bàn phím cơ, unit: Cái, page: RR88
-name: Chuột máy tính, unit: Cái, page: RR88
-name: Tai nghe, unit: Cái, page: XX88
-name: USB 32GB, unit: Cái, page: XX88
-name: Balo laptop, unit: Cái, page: MM88
+Bàn phím cơ | Cái | Gaming keyboard | RR88
+Chuột máy tính | Cái | Wired mouse | RR88
+Tai nghe | Cái | Bluetooth | XX88
+USB 32GB | Cái | Kingston | XX88
+Balo laptop | Cái | 15 inch | MM88
 ```
 
-#### 1.2. Tạo Table "transactions"
+#### 1.2. Table "transactions"
 
-Click **"Create Table"**, đặt tên: `transactions`
+Click **Create Table** → Tên: `transactions`
 
 **Columns:**
-```
-type          | Text     | Required (nhap/xuat)
-product_id    | Number   | Required
-quantity      | Number   | Required
-note          | Text     | Optional
-page          | Text     | Required
-user          | Text     | Required (first_name từ Telegram)
-timestamp     | Date     | Auto (NOW)
-```
-
-**Notes:**
-- `product_id` liên kết với ID trong table products
-- `user` sẽ tự động lấy first_name từ Telegram
-- `type`: "nhap" = nhập về, "xuat" = cấp phát
+- `type` - Text - Required (nhap/xuat)
+- `product_id` - Number - Required
+- `quantity` - Number - Required
+- `note` - Text - Optional
+- `page` - Text - Required
+- `user` - Text - Required (first_name từ Telegram)
+- `timestamp` - Date - Auto
 
 ---
 
-### BƯỚC 2: Tạo Workflow Frontend
+### BƯỚC 2: Workflow Frontend
 
-**Workflow Name:** `XuatNhapHang-Frontend`
+#### 2.1. Tạo Workflow
 
-#### 2.1. Add Webhook Node
+**Name:** `XuatNhapHang-Frontend`
 
-```
-HTTP Method: GET
-Path: app
-Respond: Immediately
-Response Mode: Last Node
-```
+#### 2.2. Add Webhook Node
 
-**Production URL sẽ là:**
-```
-https://your-n8n.app/webhook/app
-```
+- HTTP Method: **GET**
+- Path: **app**
+- Respond: **Immediately**
+- Response Mode: **Last Node**
 
-#### 2.2. Add HTML Node
+#### 2.3. Add HTML Node
 
-- Copy toàn bộ nội dung từ [`XuatNhapHang.html`](XuatNhapHang.html:1)
+- Copy [`XuatNhapHang.html`](XuatNhapHang.html:1)
 - Paste vào **HTML Content**
-
-#### 2.3. Add Respond Node
-
-```
-Respond With: Text
-Response Body: {{ $json.html }}
-
-Options → Response Headers:
-  Content-Type: text/html; charset=utf-8
-```
 
 #### 2.4. Update Config trong HTML
 
-Trong HTML Node, tìm và cập nhật:
+Tìm và sửa:
 ```javascript
 const CONFIG = {
-    N8N_WEBHOOK_URL: 'https://your-n8n.app/webhook',
+    N8N_WEBHOOK_URL: 'https://n8n.tayninh.cloud/webhook',
     API_PATH: 'api',
 };
 ```
 
-**Example:**
-```javascript
-const CONFIG = {
-    N8N_WEBHOOK_URL: 'https://n8n-demo.app.n8n.cloud/webhook',
-    API_PATH: 'api',
-};
-```
+Thay `n8n.tayninh.cloud` bằng domain n8n của bạn.
 
-#### 2.5. Save & Activate
+#### 2.5. Add Respond Node
 
-- Click **Save**
-- Toggle **Active** ON
-- **Copy Frontend URL:** `https://your-n8n.app/webhook/app`
+- Respond With: **Text**
+- Response Body: `{{ $json.html }}`
+- Headers: `Content-Type: text/html; charset=utf-8`
+
+#### 2.6. Save & Activate
+
+**Frontend URL:** `https://your-n8n.app/webhook/app`
 
 ---
 
-### BƯỚC 3: Tạo Workflow API Backend
+### BƯỚC 3: Workflow API - GET Requests
 
-**Workflow Name:** `XuatNhapHang-API`
+#### 3.1. Tạo Workflow
 
-#### 3.1. Add Webhook Node
+**Name:** `XuatNhapHang-API-GET`
 
-```
-HTTP Method: GET, POST
-Path: api
-Respond: Using 'Respond to Webhook' Node
-```
+#### 3.2. Add Webhook Node
 
-#### 3.2. Add Router (Switch) Node
+- HTTP Method: **GET**
+- Path: **api**
+- Respond: **Using 'Respond to Webhook' Node**
 
-Add **Switch** node với 5 routes dựa trên query parameter `endpoint`:
+#### 3.3. Add Switch Node
 
-**Route 1: GET Products**
-```
-Condition: {{ $json.query.endpoint }} == "products" && {{ $json.method }} == "GET"
-```
+Click **+** → **Switch**
 
-**Route 2: POST Product**
-```
-Condition: {{ $json.query.endpoint }} == "products" && {{ $json.method }} == "POST"
-```
+**Mode:** Rules
 
-**Route 3: GET Transactions**
-```
-Condition: {{ $json.query.endpoint }} == "transactions" && {{ $json.method }} == "GET"
-```
+**Add 3 Rules:**
 
-**Route 4: POST Transaction**
-```
-Condition: {{ $json.query.endpoint }} == "transactions" && {{ $json.method }} == "POST"
-```
+**Rule 1 - Products:**
+- Value 1: `{{ $json.query.endpoint }}`
+- Operation: **Equal**
+- Value 2: `products`
 
-**Route 5: GET Inventory**
-```
-Condition: {{ $json.query.endpoint }} == "inventory" && {{ $json.method }} == "GET"
-```
+**Rule 2 - Transactions:**
+- Value 1: `{{ $json.query.endpoint }}`
+- Operation: **Equal**
+- Value 2: `transactions`
 
-#### 3.3. Implement Endpoints
+**Rule 3 - Inventory:**
+- Value 1: `{{ $json.query.endpoint }}`
+- Operation: **Equal**
+- Value 2: `inventory`
 
-**GET Products (Route 1):**
-```
-Switch → Get Products from Data Table → Format → Respond
-```
+#### 3.4. Output 0 - GET Products
 
-Get from Data Table:
-```
-Table: products
-Operation: Get Many
-Filter: page = {{ $json.query.page }}
-Sort: name ASC
-```
+Switch output 0 → **Get Many** node:
+- Table: **products**
+- Return All: **ON**
+- Filter:
+  - Field: `page`
+  - Operator: **Equal**
+  - Value: `{{ $json.query.page }}`
+- Sort: `name` **ASC**
 
-Format Response (Code node):
+→ **Code** node (Format):
 ```javascript
 return [{
   json: {
@@ -204,117 +170,41 @@ return [{
 }];
 ```
 
-**POST Product (Route 2):**
-```
-Switch → Validate → Insert to Data Table → Respond
-```
+→ **Respond to Webhook**
 
-Validate (Code node):
-```javascript
-const body = $json.body;
+#### 3.5. Output 1 - GET Transactions
 
-if (!body.name || !body.unit || !body.page) {
-  throw new Error('Missing required fields');
-}
+Switch output 1 → **Get Many** node:
+- Table: **transactions**
+- Return All: **ON**
+- Filter: `page` **Equal** `{{ $json.query.page }}`
+- Sort: `timestamp` **DESC**
+- Limit: **100**
 
-return [{
-  json: {
-    name: body.name,
-    unit: body.unit,
-    description: body.description || '',
-    page: body.page
-  }
-}];
-```
+→ **Code** (Format) → **Respond to Webhook**
 
-Insert to Data Table:
-```
-Table: products
-Operation: Insert
-Data: {{ $json }}
-```
+#### 3.6. Output 2 - GET Inventory
 
-**GET Transactions (Route 3):**
-```
-Switch → Get from Data Table → Join with Products → Format → Respond
-```
+Switch output 2 → **Get Many** node:
+- Table: **transactions**
+- Filter: `page` **Equal** `{{ $json.query.page }}`
 
-Get Transactions:
-```
-Table: transactions
-Operation: Get Many
-Filter: page = {{ $json.query.page }}
-Sort: timestamp DESC
-Limit: 100
-```
-
-**POST Transaction (Route 4):**
-```
-Switch → Validate → Check Inventory → Insert → Respond
-```
-
-Validate & Check (Code node):
-```javascript
-const body = $json.body;
-
-// Validate
-if (!body.type || !body.product_id || !body.quantity || !body.page || !body.user) {
-  throw new Error('Missing required fields');
-}
-
-if (!['nhap', 'xuat'].includes(body.type)) {
-  throw new Error('Invalid type');
-}
-
-// For xuat (cấp phát), check inventory
-if (body.type === 'xuat') {
-  // Will check inventory in next node
-  return [{
-    json: {
-      ...body,
-      needInventoryCheck: true
-    }
-  }];
-}
-
-return [{
-  json: {
-    type: body.type,
-    product_id: parseInt(body.product_id),
-    quantity: parseInt(body.quantity),
-    note: body.note || '',
-    page: body.page,
-    user: body.user  // first_name từ Telegram
-  }
-}];
-```
-
-If need check → Get all transactions → Calculate → Compare → Insert or Error
-
-**GET Inventory (Route 5):**
-```
-Switch → Get All Transactions → Calculate → Format → Respond
-```
-
-Calculate Inventory (Code node):
+→ **Code** (Calculate):
 ```javascript
 const transactions = $input.all();
-const page = $('Webhook').item.json.query.page;
-
 const inventory = {};
 
 transactions.forEach(item => {
   const t = item.json;
-  if (t.page !== page) return;
-  
   const productId = t.product_id;
+  
   if (!inventory[productId]) {
     inventory[productId] = 0;
   }
   
   if (t.type === 'nhap') {
     inventory[productId] += parseInt(t.quantity);
-  } else if (t.type === 'xuat') {
+  } else {
     inventory[productId] -= parseInt(t.quantity);
   }
 });
@@ -332,328 +222,299 @@ return [{
 }];
 ```
 
-#### 3.4. Add Respond Node
+→ **Respond to Webhook**
 
-Cuối mỗi route, add **Respond to Webhook** node:
-```
-Response Body: {{ $json }}
-```
-
-#### 3.5. Save & Activate
-
-- Click **Save**
-- Toggle **Active** ON
+#### 3.7. Save & Activate
 
 ---
 
-### BƯỚC 4: Setup Telegram Bot
+### BƯỚC 4: Workflow API - POST Requests
 
-#### 4.1. Tạo Bot
+#### 4.1. Tạo Workflow
 
-Mở Telegram, tìm **@BotFather**
+**Name:** `XuatNhapHang-API-POST`
 
+#### 4.2. Add Webhook Node
+
+- HTTP Method: **POST**
+- Path: **api** (same path as GET)
+- Respond: **Using 'Respond to Webhook' Node**
+
+#### 4.3. Add Switch Node
+
+Same as GET workflow:
+- 3 rules theo `endpoint` parameter
+
+#### 4.4. Output 0 - POST Product
+
+Switch output 0 → **Code** (Validate):
+```javascript
+const body = $json.body;
+
+if (!body.name || !body.unit || !body.page) {
+  throw new Error('Missing required fields');
+}
+
+return [{
+  json: {
+    name: body.name,
+    unit: body.unit,
+    description: body.description || '',
+    page: body.page
+  }
+}];
+```
+
+→ **Insert** node:
+- Table: **products**
+- Data to Insert: `{{ $json }}`
+
+→ **Code** (Format) → **Respond to Webhook**
+
+#### 4.5. Output 1 - POST Transaction
+
+Switch output 1 → **Code** (Validate):
+```javascript
+const body = $json.body;
+
+if (!body.type || !body.product_id || !body.quantity) {
+  throw new Error('Missing fields');
+}
+
+return [{
+  json: {
+    type: body.type,
+    product_id: parseInt(body.product_id),
+    quantity: parseInt(body.quantity),
+    note: body.note || '',
+    page: body.page,
+    user: body.user
+  }
+}];
+```
+
+→ **IF** node (Check nếu xuat - cần kiểm tra tồn kho):
+- Condition: `{{ $json.type }}` **Equal** `xuat`
+
+**If True (xuat):**
+- Get transactions for this product
+- Calculate inventory
+- IF sufficient: Insert transaction
+- IF not: Throw error
+
+**If False (nhap):**
+- Insert directly (no check needed)
+
+→ Format → **Respond to Webhook**
+
+#### 4.6. Save & Activate
+
+---
+
+### BƯỚC 5: Setup Telegram Bot
+
+#### 5.1. Tạo Bot
+
+@BotFather:
 ```
 /newbot
-
 Bot name: Xuất Nhập Hàng Bot
 Username: xuatnhaphang_bot
-
-→ Copy Bot Token (giữ bí mật)
 ```
 
-#### 4.2. Setup Description
-
-```
-/setdescription
-
-📦 Hệ thống quản lý xuất nhập hàng
-Nhập về kho → Cấp phát cho nhân viên
-Hỗ trợ 3 trang: RR88, XX88, MM88
-```
-
-#### 4.3. Setup Mini App
+#### 5.2. Setup Mini App
 
 ```
 /newapp
 
-Chọn bot: @xuatnhaphang_bot
-
 Title: Xuất Nhập Hàng
-Description: Quản lý nhập về và cấp phát cho nhân viên
+Description: Quản lý nhập về và cấp phát
 Web App URL: https://your-n8n.app/webhook/app
 ```
 
-**Lưu ý:** URL phải là production URL từ **BƯỚC 2** (path "app")
-
-#### 4.4. Set Menu Button
+#### 5.3. Set Menu Button
 
 ```
 /setmenubutton
-
-Chọn bot: @xuatnhaphang_bot
-
-Button text: 📦 Mở App
-Web App URL: https://your-n8n.app/webhook/app
+Button: 📦 Mở App
+URL: https://your-n8n.app/webhook/app
 ```
-
-#### 4.5. Test
-
-1. Mở bot trên Telegram
-2. Click Menu button (📦 Mở App)
-3. App sẽ mở với first_name của bạn tự động
 
 ---
 
 ## ✅ Testing
 
-### Test Flow
+### Test GET Products
 
-1. **Mở App:**
-   - Vào bot trên Telegram
-   - Click Menu button
-   - App load thành công
-
-2. **Thêm Sản Phẩm:**
-   - Tab Danh Mục → Thêm Sản Phẩm
-   - Name: Test Product
-   - Unit: Cái
-   - Page: RR88
-   - Save → Check Data Table
-
-3. **Nhập Về:**
-   - Tab Nhập Hàng
-   - Chọn sản phẩm
-   - Số lượng: 100
-   - Note: "Nhập batch 001"
-   - Submit
-   - Check: Tồn kho = 100
-   - **User tự động = First name của bạn**
-
-4. **Cấp Phát:**
-   - Tab Cấp Phát  
-   - Chọn sản phẩm
-   - Số lượng: 20
-   - Note: "Cấp cho Nguyễn Văn A"
-   - Submit
-   - Check: Tồn kho = 80
-   - **User tự động = First name của bạn**
-
-5. **Xem Lịch Sử:**
-   - Tab Lịch Sử
-   - Verify có 2 records
-   - **Cả 2 đều hiển thị first_name của bạn**
-
-6. **Multi-Page:**
-   - Switch RR88 → XX88
-   - Data riêng biệt
-   - Switch XX88 → MM88
-   - Data riêng biệt
-
-### Test API với curl
-
-**GET Products:**
 ```bash
-curl "https://your-n8n.app/webhook/api?endpoint=products&page=RR88"
+curl "https://n8n.tayninh.cloud/webhook/api?endpoint=products&page=RR88"
 ```
 
-**POST Transaction:**
-```bash
-curl -X POST "https://your-n8n.app/webhook/api?endpoint=transactions" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "nhap",
-    "product_id": 1,
-    "quantity": 50,
-    "note": "Test nhập",
-    "page": "RR88",
-    "user": "Test User"
-  }'
-```
-
-**GET Inventory:**
-```bash
-curl "https://your-n8n.app/webhook/api?endpoint=inventory&page=RR88"
-```
-
----
-
-## 📊 Data Tables Schema
-
-### products
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | Auto | Primary key |
-| name | Text | Tên sản phẩm |
-| unit | Text | Đơn vị (Cái, Thùng...) |
-| description | Text | Mô tả |
-| page | Text | RR88/XX88/MM88 |
-| created_at | Date | Tự động |
-
-### transactions
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | Auto | Primary key |
-| type | Text | nhap hoặc xuat |
-| product_id | Number | ID sản phẩm |
-| quantity | Number | Số lượng |
-| note | Text | Ghi chú |
-| page | Text | RR88/XX88/MM88 |
-| user | Text | **First name từ Telegram** |
-| timestamp | Date | Tự động |
-
----
-
-## 🔍 Features
-
-### Auto User Tracking
-
-App tự động lấy first_name từ Telegram:
-```javascript
-const user = tg.initDataUnsafe?.user;
-if (user) {
-    currentUser = user.first_name || user.username || 'Unknown';
+Expected webhook data:
+```json
+{
+  "query": {
+    "endpoint": "products",
+    "page": "RR88"
+  },
+  "body": {}
 }
 ```
 
-Khi nhập/cấp phát:
-- User field tự động = First name của bạn
-- Không cần điền thủ công
-- Hiển thị trong lịch sử: "Nguyễn Văn A nhập 50 cái..."
+### Test POST Product
 
-### Multi-Page Support
-
-3 pages riêng biệt:
-- RR88: Data riêng
-- XX88: Data riêng  
-- MM88: Data riêng
-
-Switch page → Data tự động filter
-
-### Real-time Inventory
-
-Tồn kho tính từ transactions:
-```
-Tồn kho = Σ(nhập về) - Σ(cấp phát)
+```bash
+curl -X POST "https://n8n.tayninh.cloud/webhook/api?endpoint=products" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test","unit":"Cái","page":"RR88"}'
 ```
 
-Real-time update sau mỗi transaction
+Expected body:
+```json
+{
+  "query": { "endpoint": "products" },
+  "body": {
+    "name": "Test",
+    "unit": "Cái",
+    "page": "RR88"
+  }
+}
+```
+
+### Test POST Transaction
+
+```bash
+curl -X POST "https://n8n.tayninh.cloud/webhook/api?endpoint=transactions" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type":"nhap",
+    "product_id":1,
+    "quantity":50,
+    "page":"RR88",
+    "user":"Nguyễn Văn A"
+  }'
+```
+
+---
+
+## 🎯 Workflow Architecture (Correct)
+
+### 3 Separate Workflows
+
+**1. Frontend Workflow:**
+```
+Webhook GET (path: app) → HTML → Respond
+```
+
+**2. API GET Workflow:**
+```
+Webhook GET (path: api)
+    ↓
+Switch (endpoint parameter)
+    ├─ Output 0: products → Get Many → Format → Respond
+    ├─ Output 1: transactions → Get Many → Format → Respond
+    └─ Output 2: inventory → Get Many → Calculate → Respond
+```
+
+**3. API POST Workflow:**
+```
+Webhook POST (path: api)
+    ↓
+Switch (endpoint parameter)
+    ├─ Output 0: products → Validate → Insert → Respond
+    └─ Output 1: transactions → Validate → Check → Insert → Respond
+```
+
+### Why This Way?
+
+- ✅ Webhook chỉ chọn 1 method
+- ✅ Không có `$json.method` field
+- ✅ GET và POST tự nhiên phân biệt qua webhook nodes
+- ✅ Switch chỉ cần route theo `endpoint`
+- ✅ Không cần Merge, không cần IF check method
+
+---
+
+## 📊 Webhook Data Structure
+
+### GET Request
+```json
+{
+  "headers": {...},
+  "query": {
+    "endpoint": "products",
+    "page": "RR88"
+  },
+  "body": {}
+}
+```
+
+**Access data:**
+- Endpoint: `{{ $json.query.endpoint }}`
+- Page: `{{ $json.query.page }}`
+
+### POST Request
+```json
+{
+  "headers": {...},
+  "query": {
+    "endpoint": "products"
+  },
+  "body": {
+    "name": "Test",
+    "unit": "Cái",
+    "page": "RR88"
+  }
+}
+```
+
+**Access data:**
+- Endpoint: `{{ $json.query.endpoint }}`
+- Body data: `{{ $json.body.name }}`
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Issue 1: App không load
-**Check:**
-- Frontend workflow active?
-- Webhook path = "app"?
-- URL đúng format?
+### Switch không route đúng
+- Check: `{{ $json.query.endpoint }}` (không phải `$json.endpoint`)
+- Check: Value chính xác (products, transactions, inventory)
 
-### Issue 2: API không hoạt động
-**Check:**
-- API workflow active?
-- Webhook path = "api"?
-- Data Tables đã tạo?
-- Router conditions đúng?
+### Không get được data
+- Check: Dùng `{{ $json.query.page }}` (không phải `$json.page`)
+- Check: Webhook GET active
+- Check: Filter trong Get Many node đúng
 
-### Issue 3: User không hiển thị
-**Check:**
-- App mở từ Telegram (không phải browser)?
-- Telegram WebApp SDK load?
-- Console log để debug
-
-### Issue 4: Data không save
-**Check:**
-- Data Tables exist?
-- Column names match?
-- Validation pass?
-- Check workflow execution logs
-
----
-
-## 🔐 Security Tips
-
-1. **Restrict Access:**
-   - Only Telegram users can access
-   - n8n webhooks are private
-
-2. **Add Auth (Optional):**
-   ```javascript
-   // In API workflow, add Function node
-   const token = $json.headers.authorization;
-   if (token !== 'Bearer YOUR_SECRET') {
-     throw new Error('Unauthorized');
-   }
-   ```
-
-3. **Rate Limiting:**
-   - Use n8n's built-in features
-   - Or add custom logic
-
----
-
-## 📈 Tips
-
-### View Data Tables
-
-n8n UI → Settings → Data Tables → View/Edit
-
-### Check Workflow Logs
-
-Workflow → Executions tab → View history
-
-### Debug
-
-Add **Code** nodes with:
-```javascript
-console.log('Debug:', $json);
-return $input.all();
-```
-
-### Backup Data
-
-Export Data Tables regularly via n8n UI
+### POST không save
+- Check: Dùng `{{ $json.body.name }}` để access body data
+- Check: Webhook POST active
+- Check: Validation logic đúng
 
 ---
 
 ## ✅ Checklist
 
-Setup Complete:
-- [ ] Data Tables created (products, transactions)
-- [ ] Frontend workflow (path: app) active
-- [ ] API workflow (path: api) active
-- [ ] Config updated in HTML (webhook URL + API path)
+- [ ] Data Tables: products, transactions
+- [ ] Frontend workflow (path: app, GET)
+- [ ] API GET workflow (path: api, GET)
+  - [ ] Switch with 3 outputs
+  - [ ] Get Many nodes for each output
+  - [ ] Respond nodes
+- [ ] API POST workflow (path: api, POST)
+  - [ ] Switch with 2 outputs
+  - [ ] Validate → Insert logic
+  - [ ] Respond nodes
+- [ ] Config updated in HTML
 - [ ] Telegram bot created
-- [ ] Mini App configured with frontend URL
-- [ ] Tested: Add product works
-- [ ] Tested: Nhập về works, user auto-filled
-- [ ] Tested: Cấp phát works with inventory check
-- [ ] Tested: Multi-page switching works
-- [ ] Verified: First name displays in history
+- [ ] Tested with curl
+- [ ] Tested on Telegram app
 
 ---
 
-## 🎯 Summary
-
-**Webhooks:**
-- Frontend: `https://your-n8n.app/webhook/app`
-- API: `https://your-n8n.app/webhook/api`
-
-**Data Storage:** n8n Data Tables
-
-**User Tracking:** Auto first_name từ Telegram
-
-**Setup Time:** 20-30 phút
-
-**Maintenance:** Minimal, chỉ quản lý data trong n8n
-
----
-
-**Version:** 2.1.0  
-**Last Updated:** 2025-11-06  
-**Changes:**
-- Webhook paths: "app" & "api"
-- Bỏ SQL, dùng Data Table UI
-- Auto first_name tracking
-- Simplified setup
+**Version:** 2.1.3  
+**Updated:** 2025-11-07  
+**Fixed:**
+- Removed Merge node (không cần)
+- Removed IF nodes checking method (không có $json.method)
+- Use 3 separate workflows (cleaner)
+- Correct data access: $json.query.endpoint, $json.body.xxx
