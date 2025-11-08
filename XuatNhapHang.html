@@ -6,6 +6,7 @@
     <title>Xuất Nhập Hàng - RR88/XX88/MM88</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -794,6 +795,279 @@
             color: var(--text-primary);
         }
 
+        /* Dashboard New Styles */
+        .time-filter-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .time-filter-btn {
+            padding: 12px;
+            border: 2px solid var(--border);
+            background: var(--card-bg);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-height: 80px;
+        }
+
+        .time-filter-btn:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .time-filter-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-color: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .filter-icon {
+            font-size: 24px;
+        }
+
+        .filter-label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .filter-sublabel {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .time-range-display {
+            padding: 12px;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            border-radius: 10px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .time-range-display {
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+        }
+
+        .time-icon {
+            font-size: 16px;
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, #f9fafb 100%);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            box-shadow: 0 2px 6px var(--shadow);
+            border-left: 4px solid var(--primary);
+        }
+
+        [data-theme="dark"] .summary-card {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+
+        .summary-card.success {
+            border-left-color: var(--success);
+        }
+
+        .summary-card.danger {
+            border-left-color: var(--danger);
+        }
+
+        .summary-card.info {
+            border-left-color: var(--info);
+        }
+
+        .summary-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .summary-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .summary-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .summary-trend {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .summary-trend.up {
+            color: var(--success);
+        }
+
+        .summary-trend.down {
+            color: var(--danger);
+        }
+
+        .summary-trend.neutral {
+            color: var(--text-secondary);
+        }
+
+        .trend-icon {
+            font-size: 14px;
+        }
+
+        /* Chart Styles */
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .chart-toggle {
+            display: flex;
+            gap: 6px;
+            background: var(--border);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .chart-toggle-btn {
+            padding: 8px 14px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .chart-toggle-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .chart-toggle-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .chart-canvas-wrapper {
+            position: relative;
+            height: 300px;
+            margin-bottom: 16px;
+        }
+
+        [data-theme="dark"] .chart-canvas-wrapper {
+            background: #1f2937;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        /* Detail Table */
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .detail-table th {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .detail-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .detail-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .detail-table tr:hover td {
+            background: #f9fafb;
+        }
+
+        [data-theme="dark"] .detail-table {
+            background: #1f2937;
+        }
+
+        [data-theme="dark"] .detail-table tr:hover td {
+            background: #374151;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .quantity-nhap {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .quantity-xuat {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .quantity-net {
+            font-weight: 700;
+        }
+
+        .quantity-net.positive {
+            color: var(--success);
+        }
+
+        .quantity-net.negative {
+            color: var(--danger);
+        }
+
         /* Responsive - Better mobile */
         @media (max-width: 480px) {
             .header {
@@ -865,6 +1139,51 @@
             .inventory-table td {
                 padding: 8px 6px;
             }
+
+            .time-filter-buttons {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .time-filter-btn {
+                min-height: 70px;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .summary-card {
+                padding: 14px;
+            }
+
+            .summary-icon {
+                font-size: 28px;
+            }
+
+            .summary-value {
+                font-size: 20px;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .chart-canvas-wrapper {
+                height: 250px;
+            }
+
+            .detail-table {
+                font-size: 11px;
+            }
+
+            .detail-table th,
+            .detail-table td {
+                padding: 8px 6px;
+            }
         }
         
         /* Desktop - Larger screens */
@@ -930,28 +1249,96 @@
         <div class="content">
             <!-- Dashboard Section -->
             <div class="section active" id="dashboard">
-                <div class="stats-grid">
-                    <div class="stat-card success">
-                        <div class="stat-value" id="stat-nhap">0</div>
-                        <div class="stat-label">📥 Tổng Nhập</div>
+                <!-- Time Filter -->
+                <div class="card">
+                    <div class="card-title">🔍 Bộ Lọc Thời Gian</div>
+                    <div class="time-filter-buttons">
+                        <button class="time-filter-btn" data-filter="day">
+                            <span class="filter-icon">📅</span>
+                            <span class="filter-label">Ngày</span>
+                            <span class="filter-sublabel">24h gần nhất</span>
+                        </button>
+                        <button class="time-filter-btn active" data-filter="week">
+                            <span class="filter-icon">📅</span>
+                            <span class="filter-label">Tuần</span>
+                            <span class="filter-sublabel">7 ngày gần nhất</span>
+                        </button>
+                        <button class="time-filter-btn" data-filter="month">
+                            <span class="filter-icon">📅</span>
+                            <span class="filter-label">Tháng</span>
+                            <span class="filter-sublabel">Tháng hiện tại</span>
+                        </button>
                     </div>
-                    <div class="stat-card danger">
-                        <div class="stat-value" id="stat-xuat">0</div>
-                        <div class="stat-label">📤 Tổng Xuất</div>
-                    </div>
-                    <div class="stat-card info">
-                        <div class="stat-value" id="stat-tonkho">0</div>
-                        <div class="stat-label">📦 Tồn Kho</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="stat-sanpham">0</div>
-                        <div class="stat-label">🏷️ Sản Phẩm</div>
+                    <div class="time-range-display" id="time-range-display">
+                        <span class="time-icon">📊</span>
+                        <span id="time-range-text">Đang tải...</span>
                     </div>
                 </div>
 
+                <!-- Summary Cards with Trends -->
                 <div class="card">
-                    <div class="card-title">📝 Xuất Nhập Gần Đây</div>
-                    <div id="recent-transactions"></div>
+                    <div class="card-title">📊 Tổng Hợp</div>
+                    <div class="summary-grid">
+                        <div class="summary-card success">
+                            <div class="summary-icon">📥</div>
+                            <div class="summary-content">
+                                <div class="summary-label">Tổng Nhập</div>
+                                <div class="summary-value" id="summary-nhap">0</div>
+                                <div class="summary-trend" id="trend-nhap">
+                                    <span class="trend-icon">―</span>
+                                    <span class="trend-text">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="summary-card danger">
+                            <div class="summary-icon">📤</div>
+                            <div class="summary-content">
+                                <div class="summary-label">Tổng Xuất</div>
+                                <div class="summary-value" id="summary-xuat">0</div>
+                                <div class="summary-trend" id="trend-xuat">
+                                    <span class="trend-icon">―</span>
+                                    <span class="trend-text">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="summary-card info">
+                            <div class="summary-icon">📦</div>
+                            <div class="summary-content">
+                                <div class="summary-label">Net</div>
+                                <div class="summary-value" id="summary-net">0</div>
+                                <div class="summary-trend" id="trend-net">
+                                    <span class="trend-icon">―</span>
+                                    <span class="trend-text">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Section -->
+                <div class="card">
+                    <div class="chart-header">
+                        <div class="card-title">📊 Biểu Đồ Xuất Nhập</div>
+                        <div class="chart-toggle">
+                            <button class="chart-toggle-btn active" data-chart="bar">
+                                <span>📊</span>
+                                <span>Cột</span>
+                            </button>
+                            <button class="chart-toggle-btn" data-chart="pie">
+                                <span>🥧</span>
+                                <span>Tròn</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="main-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Detail Table -->
+                <div class="card">
+                    <div class="card-title">📋 Chi Tiết Theo Sản Phẩm</div>
+                    <div id="detail-table-container"></div>
                 </div>
             </div>
 
@@ -1113,6 +1500,12 @@
         let transactions = [];
         let inventory = {};
         let allowedPages = []; // User's allowed pages
+        
+        // Dashboard State
+        let currentTimeFilter = 'week'; // day | week | month
+        let chartInstance = null;
+        let currentChartType = 'bar'; // bar | pie
+        let dashboardData = null;
 
         // Telegram WebApp
         let tg = window.Telegram?.WebApp;
@@ -1272,6 +1665,25 @@
         }
 
         function setupEventListeners() {
+            // Dashboard filters
+            document.querySelectorAll('.time-filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.time-filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentTimeFilter = this.dataset.filter;
+                    updateDashboard();
+                });
+            });
+            
+            document.querySelectorAll('.chart-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.chart-toggle-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentChartType = this.dataset.chart;
+                    updateChart();
+                });
+            });
+            
             // Page selector
             document.querySelectorAll('.page-btn').forEach(btn => {
                 btn.addEventListener('click', async function() {
@@ -1661,71 +2073,427 @@
             }
         }
 
-        // Display Functions
-        function updateDashboard() {
-            const pageTransactions = transactions.filter(t => t.page === currentPage);
-            const pageProducts = products.filter(p => p.page === currentPage);
-            const pageInventory = inventory[currentPage] || {};
-
-            // Update stats
-            const totalNhap = pageTransactions
-                .filter(t => t.type === 'nhap')
-                .reduce((sum, t) => sum + parseInt(t.quantity), 0);
+        // ===== DASHBOARD NEW FUNCTIONS =====
+        
+        // Time Range Functions
+        function getTimeRange(filter) {
+            const end = new Date();
+            let start;
             
-            const totalXuat = pageTransactions
-                .filter(t => t.type === 'xuat')
-                .reduce((sum, t) => sum + parseInt(t.quantity), 0);
+            switch(filter) {
+                case 'day':
+                    start = new Date(end - 24 * 60 * 60 * 1000);
+                    break;
+                case 'week':
+                    start = new Date(end - 7 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'month':
+                    start = new Date(end.getFullYear(), end.getMonth(), 1);
+                    break;
+                default:
+                    start = new Date(end - 7 * 24 * 60 * 60 * 1000);
+            }
             
-            const totalTonKho = Object.values(pageInventory).reduce((sum, qty) => sum + qty, 0);
-
-            document.getElementById('stat-nhap').textContent = totalNhap;
-            document.getElementById('stat-xuat').textContent = totalXuat;
-            document.getElementById('stat-tonkho').textContent = totalTonKho;
-            document.getElementById('stat-sanpham').textContent = pageProducts.length;
-
-            // Update recent transactions
-            displayRecentTransactions();
+            return { start, end };
         }
-
-        function displayRecentTransactions() {
-            const container = document.getElementById('recent-transactions');
-            const recentTrans = transactions
-                .filter(t => t.page === currentPage)
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                .slice(0, 5);
-
-            if (recentTrans.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><div class="empty-state-text">Chưa có xuất nhập nào</div></div>';
+        
+        function formatDateRange(start, end) {
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            const startStr = start.toLocaleDateString('vi-VN', options);
+            const endStr = end.toLocaleDateString('vi-VN', options);
+            return `${startStr} → ${endStr}`;
+        }
+        
+        // Filter transactions by time range
+        function filterTransactionsByTime(trans, start, end) {
+            return trans.filter(t => {
+                const tDate = new Date(t.timestamp);
+                return tDate >= start && tDate <= end;
+            });
+        }
+        
+        // Aggregate data by product
+        function aggregateByProduct(trans, pageProducts) {
+            const aggregated = [];
+            
+            pageProducts.forEach(product => {
+                const productTrans = trans.filter(t => t.product_id === product.id);
+                
+                const nhap = productTrans
+                    .filter(t => t.type === 'nhap')
+                    .reduce((sum, t) => sum + parseInt(t.quantity), 0);
+                    
+                const xuat = productTrans
+                    .filter(t => t.type === 'xuat')
+                    .reduce((sum, t) => sum + parseInt(t.quantity), 0);
+                
+                aggregated.push({
+                    id: product.id,
+                    name: product.name,
+                    unit: product.unit,
+                    nhap: nhap,
+                    xuat: xuat,
+                    net: nhap - xuat
+                });
+            });
+            
+            return aggregated;
+        }
+        
+        // Calculate trend compared to previous period
+        function calculateTrend(current, previous) {
+            if (previous === 0) {
+                return current > 0 ? 100 : 0;
+            }
+            return ((current - previous) / previous * 100).toFixed(1);
+        }
+        
+        // Get previous period transactions
+        function getPreviousPeriodData(filter) {
+            const { start, end } = getTimeRange(filter);
+            const duration = end - start;
+            
+            const prevEnd = new Date(start.getTime() - 1);
+            const prevStart = new Date(prevEnd - duration);
+            
+            const pageTrans = transactions.filter(t => t.page === currentPage);
+            return filterTransactionsByTime(pageTrans, prevStart, prevEnd);
+        }
+        
+        // Main Dashboard Update Function
+        function updateDashboard() {
+            try {
+                const { start, end } = getTimeRange(currentTimeFilter);
+                const pageTrans = transactions.filter(t => t.page === currentPage);
+                const pageProducts = products.filter(p => p.page === currentPage);
+                
+                // Filter transactions by time
+                const filteredTrans = filterTransactionsByTime(pageTrans, start, end);
+                const previousTrans = getPreviousPeriodData(currentTimeFilter);
+                
+                // Aggregate data
+                const productData = aggregateByProduct(filteredTrans, pageProducts);
+                
+                // Calculate totals
+                const totalNhap = productData.reduce((sum, p) => sum + p.nhap, 0);
+                const totalXuat = productData.reduce((sum, p) => sum + p.xuat, 0);
+                const totalNet = totalNhap - totalXuat;
+                
+                // Calculate previous totals for trend
+                const prevProductData = aggregateByProduct(previousTrans, pageProducts);
+                const prevNhap = prevProductData.reduce((sum, p) => sum + p.nhap, 0);
+                const prevXuat = prevProductData.reduce((sum, p) => sum + p.xuat, 0);
+                const prevNet = prevNhap - prevXuat;
+                
+                // Store for chart use
+                dashboardData = {
+                    products: productData,
+                    summary: {
+                        nhap: totalNhap,
+                        xuat: totalXuat,
+                        net: totalNet,
+                        trendNhap: calculateTrend(totalNhap, prevNhap),
+                        trendXuat: calculateTrend(totalXuat, prevXuat),
+                        trendNet: calculateTrend(totalNet, prevNet)
+                    }
+                };
+                
+                // Update UI
+                updateTimeRangeDisplay(start, end);
+                updateSummaryCards(dashboardData.summary);
+                updateChart();
+                updateDetailTable(productData);
+                
+            } catch (error) {
+                console.error('Update Dashboard Error:', error);
+                logError('Update Dashboard', error);
+            }
+        }
+        
+        // Update time range display
+        function updateTimeRangeDisplay(start, end) {
+            const el = document.getElementById('time-range-text');
+            if (el) {
+                el.textContent = formatDateRange(start, end);
+            }
+        }
+        
+        // Update summary cards with trends
+        function updateSummaryCards(summary) {
+            // Nhập
+            const nhapValue = document.getElementById('summary-nhap');
+            const nhapTrend = document.getElementById('trend-nhap');
+            if (nhapValue) nhapValue.textContent = summary.nhap;
+            if (nhapTrend) {
+                updateTrendElement(nhapTrend, summary.trendNhap);
+            }
+            
+            // Xuất
+            const xuatValue = document.getElementById('summary-xuat');
+            const xuatTrend = document.getElementById('trend-xuat');
+            if (xuatValue) xuatValue.textContent = summary.xuat;
+            if (xuatTrend) {
+                updateTrendElement(xuatTrend, summary.trendXuat);
+            }
+            
+            // Net
+            const netValue = document.getElementById('summary-net');
+            const netTrend = document.getElementById('trend-net');
+            if (netValue) netValue.textContent = summary.net > 0 ? `+${summary.net}` : summary.net;
+            if (netTrend) {
+                updateTrendElement(netTrend, summary.trendNet);
+            }
+        }
+        
+        // Update trend element
+        function updateTrendElement(el, trendValue) {
+            const iconEl = el.querySelector('.trend-icon');
+            const textEl = el.querySelector('.trend-text');
+            
+            if (trendValue === null || trendValue === 0) {
+                el.className = 'summary-trend neutral';
+                if (iconEl) iconEl.textContent = '―';
+                if (textEl) textEl.textContent = 'N/A';
+            } else if (trendValue > 0) {
+                el.className = 'summary-trend up';
+                if (iconEl) iconEl.textContent = '↑';
+                if (textEl) textEl.textContent = `${Math.abs(trendValue)}%`;
+            } else {
+                el.className = 'summary-trend down';
+                if (iconEl) iconEl.textContent = '↓';
+                if (textEl) textEl.textContent = `${Math.abs(trendValue)}%`;
+            }
+        }
+        
+        // Update chart based on current type
+        function updateChart() {
+            if (!dashboardData || !dashboardData.products) return;
+            
+            if (currentChartType === 'bar') {
+                renderBarChart(dashboardData.products);
+            } else {
+                renderPieChart(dashboardData.products);
+            }
+        }
+        
+        // Render Bar Chart
+        function renderBarChart(productData) {
+            const canvas = document.getElementById('main-chart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Destroy existing chart
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            
+            // Prepare data
+            const labels = productData.map(p => p.name);
+            const nhapData = productData.map(p => p.nhap);
+            const xuatData = productData.map(p => p.xuat);
+            
+            // Get theme colors
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const textColor = isDark ? '#f3f4f6' : '#1f2937';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+            
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '📥 Nhập',
+                            data: nhapData,
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                        },
+                        {
+                            label: '📤 Xuất',
+                            data: xuatData,
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: { size: 12 },
+                                color: textColor
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 12 },
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: textColor,
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: gridColor
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: textColor,
+                                font: { size: 10 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 750,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+        
+        // Render Pie Chart
+        function renderPieChart(productData) {
+            const canvas = document.getElementById('main-chart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Destroy existing chart
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            
+            // Prepare data - combine nhap and xuat for all products
+            const labels = [];
+            const data = [];
+            const backgrounds = [];
+            
+            productData.forEach((p, index) => {
+                if (p.nhap > 0) {
+                    labels.push(`${p.name} (Nhập)`);
+                    data.push(p.nhap);
+                    backgrounds.push(`rgba(16, 185, 129, ${0.9 - index * 0.05})`);
+                }
+                if (p.xuat > 0) {
+                    labels.push(`${p.name} (Xuất)`);
+                    data.push(p.xuat);
+                    backgrounds.push(`rgba(239, 68, 68, ${0.9 - index * 0.05})`);
+                }
+            });
+            
+            // Get theme
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const textColor = isDark ? '#f3f4f6' : '#1f2937';
+            
+            chartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgrounds,
+                        borderWidth: 2,
+                        borderColor: isDark ? '#1f2937' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 10,
+                                font: { size: 11 },
+                                color: textColor
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 12 },
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 750,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+        
+        // Update detail table
+        function updateDetailTable(productData) {
+            const container = document.getElementById('detail-table-container');
+            if (!container) return;
+            
+            if (productData.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><div class="empty-state-text">Không có dữ liệu trong khoảng thời gian này</div></div>';
                 return;
             }
-
-            container.innerHTML = recentTrans.map(trans => {
-                const product = products.find(p => p.id === trans.product_id);
-                const productName = product ? product.name : 'N/A';
-                const time = new Date(trans.timestamp).toLocaleString('vi-VN');
-                
-                return `
-                    <div class="list-item ${trans.type}">
-                        <div class="list-item-header">
-                            <div class="list-item-title">${productName}</div>
-                            <div class="list-item-badge badge-${trans.type}">
-                                ${trans.type === 'nhap' ? '📥 Nhập về' : '📤 Cấp phát'}
-                            </div>
-                        </div>
-                        <div class="list-item-details">
-                            <div class="list-item-detail">
-                                <span>📊</span>
-                                <span>SL: ${trans.quantity}</span>
-                            </div>
-                            <div class="list-item-detail">
-                                <span>🕐</span>
-                                <span>${time}</span>
-                            </div>
-                        </div>
-                        ${trans.note ? `<div style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">📝 ${trans.note}</div>` : ''}
-                    </div>
-                `;
-            }).join('');
+            
+            // Sort by net (highest first)
+            const sorted = [...productData].sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+            
+            container.innerHTML = `
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>Sản Phẩm</th>
+                            <th style="text-align: center;">📥 Nhập</th>
+                            <th style="text-align: center;">📤 Xuất</th>
+                            <th style="text-align: center;">📦 Net</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sorted.map(item => `
+                            <tr>
+                                <td class="product-name">${item.name}</td>
+                                <td class="quantity-nhap" style="text-align: center;">${item.nhap}</td>
+                                <td class="quantity-xuat" style="text-align: center;">${item.xuat}</td>
+                                <td class="quantity-net ${item.net > 0 ? 'positive' : item.net < 0 ? 'negative' : ''}" style="text-align: center;">
+                                    ${item.net > 0 ? '+' : ''}${item.net}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
         }
 
         function updateProductSelects() {
