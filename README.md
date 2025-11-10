@@ -6,10 +6,13 @@
 
 ## ✨ Tính Năng Chính
 
-### 1. 📊 Dashboard - Tổng Quan Real-time
-- 4 metrics chính: Tổng nhập về, tổng cấp phát, tồn kho, số sản phẩm
-- Hiển thị xuất nhập gần đây với tên người thực hiện
-- Tự động cập nhật khi có thay đổi
+### 1. 📊 Dashboard - Phân Tích Với Biểu Đồ ⭐ NEW v2.3
+- **Bộ lọc thời gian:** Ngày (24h) | Tuần (7 ngày) | Tháng (tháng hiện tại)
+- **Summary cards** với trend indicators (so sánh kỳ trước)
+- **Biểu đồ tương tác:** Bar Chart & Pie Chart (toggle được)
+- **Chi tiết theo sản phẩm:** Table với tổng nhập/xuất/net
+- Hiển thị TẤT CẢ sản phẩm trong biểu đồ
+- Responsive, mobile-optimized
 
 ### 2. 📥 Nhập Hàng Về Kho
 - Form đơn giản, chọn sản phẩm từ dropdown
@@ -32,6 +35,8 @@
 - Hiển thị tồn kho real-time của tất cả sản phẩm
 - Tìm kiếm nhanh
 - Màu sắc trực quan: 🟢 Còn hàng / 🔴 Hết hàng
+- **Export Excel/CSV** (tùy device)
+- **Đồng bộ Google Sheets** - 4 sheets tự động ⭐ NEW v2.3
 - Table responsive
 
 ### 5. 🕐 Lịch Sử Xuất Nhập
@@ -327,19 +332,26 @@ console.log(user.id);
 
 ## 🎯 Roadmap
 
-### Phase 1 ✅ (Current)
+### Phase 1 ✅ (Completed)
 - ✅ 6 core features
 - ✅ n8n Data Tables
 - ✅ Auto first_name tracking
 - ✅ Multi-page support
 - ✅ Modern UI
+- ✅ User whitelist auth
 
-### Phase 2 (Next)
-- [ ] Export to Excel
+### Phase 2 ✅ (Completed)
+- ✅ Export to Excel/CSV
+- ✅ Advanced charts (Bar & Pie)
+- ✅ Time-based filtering
+- ✅ Trend analysis
+- ✅ Google Sheets sync
+
+### Phase 3 (Next)
 - [ ] Print labels
 - [ ] Barcode scanning
 - [ ] Push notifications
-- [ ] Advanced charts
+- [ ] Low stock alerts
 
 ### Phase 3 (Future)
 - [ ] Role-based access
@@ -351,10 +363,12 @@ console.log(user.id);
 ## 👨‍💻 Tech Stack
 
 - **Frontend:** HTML5, CSS3, JavaScript ES6+
+- **Charts:** Chart.js v4.4.0
 - **Backend:** n8n Workflow Automation
 - **Database:** n8n Data Tables
+- **Integration:** Google Sheets API
 - **Platform:** Telegram Mini App
-- **Design:** Custom CSS Gradients
+- **Design:** Custom CSS Gradients + Animations
 
 ## 📞 Support
 
@@ -373,35 +387,50 @@ console.log(user.id);
 | Feature | Status | Auto-Track User |
 |---------|--------|-----------------|
 | Multi-Page (RR88/XX88/MM88) | ✅ | - |
-| Dashboard Stats | ✅ | - |
+| User Whitelist Auth | ✅ | ✅ By telegram_id |
+| Dashboard với Charts | ✅ ⭐ | - |
+| Time Filtering (Day/Week/Month) | ✅ ⭐ | - |
+| Trend Analysis | ✅ ⭐ | - |
 | Nhập Về | ✅ | ✅ First name |
 | Cấp Phát | ✅ | ✅ First name |
 | Tồn Kho Real-time | ✅ | - |
 | Lịch Sử | ✅ | ✅ Show first name |
 | Danh Mục CRUD | ✅ | - |
 | Search & Filter | ✅ | - |
+| Export Excel/CSV | ✅ | - |
+| Google Sheets Sync | ✅ ⭐ | ✅ Synced by |
 | Responsive Design | ✅ | - |
-| n8n Data Tables | ✅ | - |
+| Dark Mode | ✅ | - |
 
 ## 📸 UI Preview
 
-### Dashboard
+### Dashboard v2.3 (NEW)
 ```
 ┌─────────────────────────────────┐
 │  📦 Quản Lý Xuất Nhập Hàng     │
 │  [RR88] [XX88] [MM88]          │
 ├─────────────────────────────────┤
-│ 📥 Tổng Nhập │ 📤 Tổng Xuất    │
-│    500       │     200         │
-├──────────────┼─────────────────┤
-│ 📦 Tồn Kho   │ 🏷️ Sản Phẩm   │
-│    300       │      15         │
+│ 🔍 Bộ Lọc Thời Gian           │
+│ [Ngày] [Tuần ●] [Tháng]       │
+│ 📊 01/11/25 → 07/11/25         │
 ├─────────────────────────────────┤
-│ 📝 Xuất Nhập Gần Đây           │
-│                                 │
-│ 📥 Bàn phím cơ                 │
-│ SL: 50 | 👤 Nguyễn Văn A       │
-│ 📝 Batch #001                  │
+│ 📊 Tổng Hợp                    │
+│ ┌────┬────┬────┐               │
+│ │📥  │📤  │📦  │               │
+│ │500 │200 │+300│               │
+│ │↑15%│↓5% │↑25%│               │
+│ └────┴────┴────┘               │
+├─────────────────────────────────┤
+│ 📊 Biểu Đồ [Cột ●] [Tròn]     │
+│ ┌─┐    ┌─┐    ┌─┐             │
+│ │█│    │█│    │█│  🟢 Nhập    │
+│ │█│ ┌─┐│█│ ┌─┐│█│  🔴 Xuất    │
+│ └─┴─┴─┴┴─┴─┴─┴┴─┘             │
+├─────────────────────────────────┤
+│ 📋 Chi Tiết Theo Sản Phẩm     │
+│ │SP    │Nhập│Xuất│Net│        │
+│ │Bàn   │100 │30  │+70│        │
+│ │Chuột │50  │20  │+30│        │
 └─────────────────────────────────┘
 ```
 
@@ -409,8 +438,17 @@ console.log(user.id);
 
 **Made with ❤️ for efficient inventory management**
 
-**Version:** 2.2.0
-**Last Updated:** 2025-11-07
+**Version:** 2.3.0
+**Last Updated:** 2025-11-10
+
+### Changelog v2.3.0 ⭐ NEW
+- ✅ **Dashboard với biểu đồ** - Bar Chart & Pie Chart
+- ✅ **Time filtering** - Ngày/Tuần/Tháng
+- ✅ **Trend analysis** - So sánh với kỳ trước
+- ✅ **Google Sheets sync** - Đồng bộ 4 sheets tự động
+- ✅ **Export Excel/CSV** - Tùy device
+- ✅ **Mobile-optimized** - Dashboard responsive hoàn toàn
+- ✅ Chart.js integration - Interactive charts
 
 ### Changelog v2.2.0
 - ✅ **User whitelist authentication** - Giới hạn người dùng

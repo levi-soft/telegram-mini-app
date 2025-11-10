@@ -481,27 +481,165 @@ User chỉ thấy pages được phép:
 
 ---
 
+## BƯỚC 6: Workflow Google Sheets Sync (Optional)
+
+### 6.1. Tạo Workflow
+
+**Name:** `XuatNhapHang-GSheet-Sync`
+
+### 6.2. Webhook Node
+
+- HTTP Method: **POST**
+- Path: **api**
+
+### 6.3. Check Auth (Same as other workflows)
+
+- Get Many → allowed_users
+- IF → Check authorized
+- FALSE → Return error
+
+### 6.4. Switch Node (Authorized Branch)
+
+Add **Switch** với 1 rule:
+- Value 1: `{{ $json.query.endpoint }}`
+- Operation: **Equal**
+- Value 2: `sync_gsheet`
+
+### 6.5. Output 0 - Sync GSheet Flow
+
+#### Step 1: Parse Request Body
+
+**Code** node:
+```javascript
+const body = $input.first().json.body;
+
+return [{
+  json: {
+    inventory: body.inventory,
+    transactions: body.transactions,
+    sync_time: body.sync_time,
+    synced_by: body.synced_by
+  }
+}];
+```
+
+#### Step 2: Create/Update Google Sheets
+
+**Google Sheets** node (x4 - một cho mỗi sheet):
+
+**Sheet 1 - RR88 Tồn Kho:**
+- Spreadsheet: Your GSheet ID hoặc create new
+- Sheet: `RR88`
+- Operation: **Clear + Append**
+- Data: `{{ $json.inventory.RR88 }}`
+- Columns:
+  - id → ID
+  - name → Sản Phẩm
+  - unit → Đơn Vị
+  - quantity → Tồn Kho
+  - description → Mô Tả
+
+**Sheet 2 - XX88 Tồn Kho:**
+- Sheet: `XX88`
+- Data: `{{ $json.inventory.XX88 }}`
+- Same columns (id, name, unit, quantity, description)
+
+**Sheet 3 - MM88 Tồn Kho:**
+- Sheet: `MM88`
+- Data: `{{ $json.inventory.MM88 }}`
+- Same columns (id, name, unit, quantity, description)
+
+**Sheet 4 - Lịch Sử (All Pages):**
+- Sheet: `Lịch Sử`
+- Data: `{{ $json.transactions }}`
+- Columns:
+  - id → ID Giao Dịch
+  - timestamp → Ngày Giờ
+  - page → Page
+  - type → Loại
+  - product_id → ID Sản Phẩm
+  - product → Tên Sản Phẩm
+  - quantity → Số Lượng
+  - user → Người Thực Hiện
+  - note → Ghi Chú
+
+#### Step 3: Return Success Response
+
+**Code** node:
+```javascript
+return [{
+  json: {
+    success: true,
+    spreadsheetUrl: 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID',
+    message: 'Đồng bộ thành công',
+    sheets: ['RR88', 'XX88', 'MM88', 'Lịch Sử'],
+    synced_at: new Date().toISOString()
+  }
+}];
+```
+
+**Lưu ý:**
+- Thay `YOUR_SHEET_ID` bằng ID thật của Google Sheet
+- Hoặc dùng dynamic ID từ Google Sheets node output
+
+→ **Respond to Webhook**
+
+### 6.6. Google Sheets Setup
+
+#### Prerequisites:
+1. **Google Cloud Project** với Sheets API enabled
+2. **Service Account** hoặc OAuth credentials
+3. **Share spreadsheet** với service account email
+
+#### n8n Google Sheets Credential:
+- Vào n8n → Credentials → Add New
+- Type: Google Sheets API
+- Auth Type: Service Account (recommended)
+- Upload JSON key file
+- Save
+
+#### Create Spreadsheet:
+1. Tạo mới Google Sheet
+2. Tạo 4 sheets: `RR88`, `XX88`, `MM88`, `Lịch Sử`
+3. Share với service account email (Editor permission)
+4. Copy Spreadsheet ID từ URL
+
+### 6.7. Save & Activate
+
+---
+
 ## 📊 Summary
 
-**3 Workflows:**
+**4 Workflows:**
 1. Frontend (GET app)
 2. API GET (with auth check)
 3. API POST (with auth check)
+4. **Google Sheets Sync (POST sync_gsheet)** - Optional
 
 **3 Data Tables:**
 1. products
 2. transactions
 3. allowed_users (chỉ telegram_id + permissions)
 
+**Google Sheets Integration:**
+- ✅ 4 sheets tự động: RR88, XX88, MM88, Lịch Sử
+- ✅ Đồng bộ toàn bộ dữ liệu từ app
+- ✅ Link trực tiếp để mở GSheet
+- ✅ Copy link hoặc open trong browser
+- 🔧 Requires: Google Cloud Service Account
+
 **User Flow:**
 1. Mở app → Check whitelist
 2. Authorized → Use app
 3. Unauthorized → Contact @PinusITRR88 → Get added → Access!
+4. Click "Đồng Bộ GSheet" → View data in Google Sheets ⭐ NEW
 
-**Setup Time:** 40-50 phút
+**Setup Time:**
+- Core features: 40-50 phút
+- + Google Sheets: +15-20 phút
 
 ---
 
-**Version:** 2.2.0  
-**Updated:** 2025-11-07  
+**Version:** 2.3.0
+**Updated:** 2025-11-10
 **Contact Admin:** https://t.me/PinusITRR88
