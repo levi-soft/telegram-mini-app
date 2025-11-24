@@ -1045,6 +1045,41 @@
         }
 
         /* ============================================
+           🌙 DARK MODE TEXT FIX
+           ============================================ */
+        [data-theme="dark"] .nav-btn {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .nav-btn.active {
+            color: white;
+        }
+
+        [data-theme="dark"] .page-btn {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .page-btn.active {
+            color: var(--primary);
+        }
+
+        [data-theme="dark"] .time-filter-btn {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .time-filter-btn.active {
+            color: white;
+        }
+
+        [data-theme="dark"] .chart-toggle-btn {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .chart-toggle-btn.active {
+            color: white;
+        }
+
+        /* ============================================
            📱 RESPONSIVE - Mobile First
            ============================================ */
         @media (max-width: 480px) {
@@ -2517,12 +2552,12 @@
                 
                 let dateLabel;
                 if (date.toDateString() === today.toDateString()) {
-                    dateLabel = '📅 Hôm Nay';
+                    dateLabel = 'Hôm Nay';
                 } else if (date.toDateString() === yesterday.toDateString()) {
-                    dateLabel = '📅 Hôm Qua';
+                    dateLabel = 'Hôm Qua';
                 } else {
                     const dayOfWeek = date.toLocaleDateString('vi-VN', { weekday: 'long' });
-                    dateLabel = `📅 ${dayOfWeek}, ${dateKey}`;
+                    dateLabel = `${dayOfWeek}, ${dateKey}`;
                 }
                 
                 html += `
@@ -2711,12 +2746,12 @@
                 
                 let dateLabel;
                 if (date.toDateString() === today.toDateString()) {
-                    dateLabel = '📅 Hôm Nay';
+                    dateLabel = 'Hôm Nay';
                 } else if (date.toDateString() === yesterday.toDateString()) {
-                    dateLabel = '📅 Hôm Qua';
+                    dateLabel = 'Hôm Qua';
                 } else {
                     const dayOfWeek = date.toLocaleDateString('vi-VN', { weekday: 'long' });
-                    dateLabel = `📅 ${dayOfWeek}, ${dateKey}`;
+                    dateLabel = `${dayOfWeek}, ${dateKey}`;
                 }
                 
                 html += `
