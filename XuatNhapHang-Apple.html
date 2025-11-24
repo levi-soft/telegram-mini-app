@@ -35,12 +35,12 @@
             --warning: var(--apple-orange);
             --danger: var(--apple-red);
             
-            /* 📄 Backgrounds - Light */
-            --bg-primary: #F2F2F7;
+            /* 📄 Backgrounds - Light (Darker for better contrast) */
+            --bg-primary: #E5E5EA;
             --bg-secondary: #FFFFFF;
-            --bg-tertiary: #F9F9F9;
-            --bg-elevated: rgba(255, 255, 255, 0.9);
-            --bg-frosted: rgba(255, 255, 255, 0.72);
+            --bg-tertiary: #F2F2F7;
+            --bg-elevated: rgba(255, 255, 255, 0.95);
+            --bg-frosted: rgba(255, 255, 255, 0.8);
             
             /* 📝 Text Colors - Light */
             --text-primary: #000000;
@@ -49,26 +49,26 @@
             --text-quaternary: #AEAEB2;
             
             /* 🎨 UI Elements */
-            --separator: rgba(60, 60, 67, 0.12);
-            --border: rgba(0, 0, 0, 0.04);
+            --separator: rgba(60, 60, 67, 0.18);
+            --border: rgba(0, 0, 0, 0.08);
             
             /* 🌓 Shadows - Soft Apple Style */
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.12);
-            --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+            --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
             
-            /* 📐 Spacing - 8pt Grid */
-            --space-xs: 8px;
-            --space-sm: 16px;
-            --space-md: 24px;
-            --space-lg: 32px;
-            --space-xl: 40px;
+            /* 📐 Spacing - 8pt Grid (Compact) */
+            --space-xs: 6px;
+            --space-sm: 12px;
+            --space-md: 18px;
+            --space-lg: 24px;
+            --space-xl: 32px;
             
             /* 🔤 Typography */
             --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-            --border-radius: 12px;
-            --border-radius-lg: 20px;
+            --border-radius: 10px;
+            --border-radius-lg: 16px;
         }
 
         /* 🌙 Dark Mode - Apple Style */
@@ -144,10 +144,10 @@
         }
 
         .header-title {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             letter-spacing: -0.5px;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -155,39 +155,41 @@
         }
 
         .header-subtitle {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
             font-weight: 500;
         }
 
-        /* 🔘 Page Selector - iOS Style Pills */
+        /* 🔘 Page Selector - iOS Style Pills (Enhanced) */
         .page-selector {
             display: flex;
-            gap: 8px;
+            gap: 5px;
             margin-top: var(--space-sm);
             background: var(--bg-tertiary);
-            padding: 4px;
-            border-radius: 10px;
+            padding: 3px;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
         .page-btn {
             flex: 1;
-            padding: 10px;
-            border: none;
+            padding: 8px;
+            border: 1px solid transparent;
             background: transparent;
-            color: var(--text-secondary);
-            border-radius: 8px;
-            font-size: 15px;
+            color: var(--text-tertiary);
+            border-radius: 6px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            min-height: 44px;
+            min-height: 36px;
         }
 
         .page-btn.active {
-            background: var(--bg-secondary);
-            color: var(--primary);
-            box-shadow: var(--shadow-sm);
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
             transform: scale(1.02);
         }
 
@@ -204,7 +206,7 @@
         }
 
         .nav-btn {
-            padding: 12px;
+            padding: 10px;
             border: none;
             background: var(--bg-tertiary);
             border-radius: var(--border-radius);
@@ -213,8 +215,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
-            min-height: 76px;
+            gap: 5px;
+            min-height: 68px;
         }
 
         .nav-btn:active {
@@ -224,17 +226,17 @@
         .nav-btn.active {
             background: var(--primary);
             color: white;
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
             transform: translateY(-2px);
         }
 
         .nav-btn-icon {
-            font-size: 26px;
+            font-size: 24px;
             line-height: 1;
         }
 
         .nav-btn-text {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             opacity: 0.9;
         }
@@ -260,7 +262,7 @@
             display: block;
         }
 
-        /* 🎴 Card - Apple Glass Morphism */
+        /* 🎴 Card - Liquid Glass Morphism */
         .card {
             background: var(--bg-secondary);
             border-radius: var(--border-radius-lg);
@@ -269,6 +271,19 @@
             box-shadow: var(--shadow-card);
             border: 1px solid var(--border);
             animation: slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            pointer-events: none;
         }
 
         @keyframes slideUp {
@@ -277,7 +292,7 @@
         }
 
         .card-title {
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 700;
             margin-bottom: var(--space-sm);
             color: var(--text-primary);
@@ -333,20 +348,35 @@
            🔘 BUTTONS - iOS Style
            ============================================ */
         .btn {
-            padding: 15px 24px;
+            padding: 13px 20px;
             border: none;
-            border-radius: 12px;
-            font-size: 17px;
+            border-radius: 10px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 7px;
             width: 100%;
-            min-height: 50px;
+            min-height: 46px;
             letter-spacing: -0.3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn:hover::before {
+            opacity: 1;
         }
 
         .btn:active {
@@ -388,10 +418,10 @@
         }
 
         .btn-sm {
-            padding: 10px 16px;
-            font-size: 15px;
-            min-height: 40px;
-            border-radius: 10px;
+            padding: 9px 14px;
+            font-size: 14px;
+            min-height: 38px;
+            border-radius: 8px;
         }
 
         /* ============================================
@@ -450,10 +480,23 @@
             background: var(--bg-secondary);
             border-radius: var(--border-radius);
             padding: var(--space-sm);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             box-shadow: var(--shadow-card);
             border: 1px solid var(--border);
             transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .list-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            pointer-events: none;
         }
 
         .list-item:active {
@@ -752,17 +795,32 @@
         }
 
         .time-filter-btn {
-            padding: 12px;
+            padding: 10px;
             border: 1px solid var(--separator);
-            background: var(--bg-tertiary);
-            border-radius: 10px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
-            min-height: 72px;
+            gap: 3px;
+            min-height: 64px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .time-filter-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .time-filter-btn:hover::before {
+            opacity: 1;
         }
 
         .time-filter-btn:active {
@@ -773,20 +831,20 @@
             background: var(--primary);
             color: white;
             border-color: var(--primary);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .filter-icon {
-            font-size: 22px;
+            font-size: 20px;
         }
 
         .filter-label {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
         }
 
         .filter-sublabel {
-            font-size: 11px;
+            font-size: 10px;
             opacity: 0.8;
         }
 
@@ -814,15 +872,28 @@
         .summary-card {
             background: var(--bg-secondary);
             border-radius: var(--border-radius);
-            padding: 16px 12px;
+            padding: 14px 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 8px;
+            gap: 6px;
             box-shadow: var(--shadow-card);
             border: 1px solid var(--border);
             border-top: 3px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+            pointer-events: none;
         }
 
         .summary-card.success {
@@ -834,17 +905,17 @@
         }
 
         .summary-icon {
-            font-size: 32px;
+            font-size: 28px;
         }
 
         .summary-label {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-secondary);
             font-weight: 500;
         }
 
         .summary-value {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--text-primary);
             letter-spacing: -0.5px;
