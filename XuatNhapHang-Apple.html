@@ -1116,6 +1116,95 @@
         }
 
         /* ============================================
+           📦 BULK IMPORT/EXPORT STYLES
+           ============================================ */
+        .bulk-item {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid var(--separator);
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .bulk-item-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .bulk-item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bulk-qty-input {
+            width: 70px;
+            padding: 6px 8px;
+            border: 1px solid var(--separator);
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .bulk-remove-btn {
+            padding: 6px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            min-width: 32px;
+            min-height: 32px;
+        }
+
+        .bulk-add-row {
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 2px dashed var(--separator);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .bulk-add-row:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary);
+        }
+
+        .bulk-summary {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 14px;
+            margin: 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+
+        .bulk-summary-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .bulk-summary-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* ============================================
            🌙 DARK MODE TEXT FIX
            ============================================ */
         [data-theme="dark"] .nav-btn {
@@ -1131,7 +1220,7 @@
         }
 
         [data-theme="dark"] .page-btn.active {
-            color: var(--primary);
+            color: white !important;
         }
 
         [data-theme="dark"] .time-filter-btn {
@@ -1382,6 +1471,12 @@
             <div class="section" id="nhap">
                 <div class="card">
                     <div class="card-title">📥 Nhập Hàng Mới</div>
+                    <div style="text-align: right; margin-bottom: 12px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="switchToBulkNhap()" style="width: auto; min-width: 140px;">
+                            <span>📦</span>
+                            <span>Nhập Nhiều</span>
+                        </button>
+                    </div>
                     <form id="form-nhap">
                         <div class="form-group">
                             <label class="form-label">Sản Phẩm</label>
@@ -1409,6 +1504,12 @@
             <div class="section" id="xuat">
                 <div class="card">
                     <div class="card-title">📤 Xuất Hàng</div>
+                    <div style="text-align: right; margin-bottom: 12px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="switchToBulkXuat()" style="width: auto; min-width: 140px;">
+                            <span>📮</span>
+                            <span>Xuất Nhiều</span>
+                        </button>
+                    </div>
                     <form id="form-xuat">
                         <div class="form-group">
                             <label class="form-label">Sản Phẩm</label>
@@ -1429,6 +1530,70 @@
                             <span>Xuất Hàng</span>
                         </button>
                     </form>
+                </div>
+            </div>
+
+            <!-- Nhap Hang Bulk Section -->
+            <div class="section" id="nhap-bulk">
+                <div class="card">
+                    <div class="card-title">📦 Nhập Nhiều Sản Phẩm</div>
+                    <div style="text-align: right; margin-bottom: 12px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="switchToSingleNhap()" style="width: auto; min-width: 140px;">
+                            <span>📥</span>
+                            <span>Nhập Lẻ</span>
+                        </button>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                        Nhập nhiều sản phẩm cùng lúc. Mỗi sản phẩm sẽ tạo một giao dịch riêng.
+                    </p>
+                    <div id="bulk-nhap-list"></div>
+                    <div class="bulk-add-row" onclick="addBulkNhapRow()">
+                        <span>➕ Thêm Sản Phẩm</span>
+                    </div>
+                    <div class="bulk-summary">
+                        <span class="bulk-summary-label">Tổng sản phẩm:</span>
+                        <span class="bulk-summary-value" id="bulk-nhap-count">0</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ghi Chú Chung</label>
+                        <input type="text" class="form-control" id="bulk-nhap-note" placeholder="Ghi chú chung (không bắt buộc)">
+                    </div>
+                    <button class="btn btn-success" onclick="handleBulkNhap()">
+                        <span>✅</span>
+                        <span>Nhập Tất Cả</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Xuat Hang Bulk Section -->
+            <div class="section" id="xuat-bulk">
+                <div class="card">
+                    <div class="card-title">📮 Xuất Nhiều Sản Phẩm</div>
+                    <div style="text-align: right; margin-bottom: 12px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="switchToSingleXuat()" style="width: auto; min-width: 140px;">
+                            <span>📤</span>
+                            <span>Xuất Lẻ</span>
+                        </button>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                        Xuất nhiều sản phẩm cùng lúc. Hệ thống sẽ kiểm tra tồn kho cho từng sản phẩm.
+                    </p>
+                    <div id="bulk-xuat-list"></div>
+                    <div class="bulk-add-row" onclick="addBulkXuatRow()">
+                        <span>➕ Thêm Sản Phẩm</span>
+                    </div>
+                    <div class="bulk-summary">
+                        <span class="bulk-summary-label">Tổng sản phẩm:</span>
+                        <span class="bulk-summary-value" id="bulk-xuat-count">0</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ghi Chú Chung</label>
+                        <input type="text" class="form-control" id="bulk-xuat-note" placeholder="Ghi chú chung (không bắt buộc)">
+                    </div>
+                    <button class="btn btn-danger" onclick="handleBulkXuat()">
+                        <span>✅</span>
+                        <span>Xuất Tất Cả</span>
+                    </button>
                 </div>
             </div>
 
@@ -1810,8 +1975,14 @@
                 case 'nhap':
                     updateProductSelects();
                     break;
+                case 'nhap-bulk':
+                    renderBulkNhapList();
+                    break;
                 case 'xuat':
                     updateProductSelects();
+                    break;
+                case 'xuat-bulk':
+                    renderBulkXuatList();
                     break;
                 case 'tonkho':
                     displayTonKho();
@@ -2536,10 +2707,14 @@
 
         function updateProductSelects() {
             const pageProducts = products.filter(p => p.page === currentPage);
+            const pageInventory = inventory[currentPage] || {};
             const nhapSelect = document.getElementById('nhap-product');
             const xuatSelect = document.getElementById('xuat-product');
 
-            const options = pageProducts.map(p => `<option value="${p.id}">${p.name} (${p.unit})</option>`).join('');
+            const options = pageProducts.map(p => {
+                const qty = pageInventory[p.id] || 0;
+                return `<option value="${p.id}">${p.name} (TK: ${qty})</option>`;
+            }).join('');
             
             if (nhapSelect) nhapSelect.innerHTML = '<option value="">-- Chọn sản phẩm --</option>' + options;
             if (xuatSelect) xuatSelect.innerHTML = '<option value="">-- Chọn sản phẩm --</option>' + options;
@@ -3308,6 +3483,296 @@
                     window.open(url, '_blank');
                 }
             }
+        }
+        
+        // ===== BULK IMPORT/EXPORT FUNCTIONS =====
+        
+        let bulkNhapItems = [];
+        let bulkXuatItems = [];
+        
+        function addBulkNhapRow() {
+            const pageProducts = products.filter(p => p.page === currentPage);
+            if (pageProducts.length === 0) {
+                showToast('error', 'Chưa có sản phẩm nào!');
+                return;
+            }
+            
+            const id = Date.now();
+            bulkNhapItems.push({
+                id: id,
+                product_id: null,
+                quantity: 1
+            });
+            
+            renderBulkNhapList();
+        }
+        
+        function addBulkXuatRow() {
+            const pageProducts = products.filter(p => p.page === currentPage);
+            if (pageProducts.length === 0) {
+                showToast('error', 'Chưa có sản phẩm nào!');
+                return;
+            }
+            
+            const id = Date.now();
+            bulkXuatItems.push({
+                id: id,
+                product_id: null,
+                quantity: 1
+            });
+            
+            renderBulkXuatList();
+        }
+        
+        function removeBulkNhapItem(id) {
+            bulkNhapItems = bulkNhapItems.filter(item => item.id !== id);
+            renderBulkNhapList();
+        }
+        
+        function removeBulkXuatItem(id) {
+            bulkXuatItems = bulkXuatItems.filter(item => item.id !== id);
+            renderBulkXuatList();
+        }
+        
+        function updateBulkNhapItem(id, field, value) {
+            const item = bulkNhapItems.find(i => i.id === id);
+            if (item) {
+                item[field] = field === 'product_id' ? parseInt(value) : parseInt(value);
+            }
+            renderBulkNhapList();
+        }
+        
+        function updateBulkXuatItem(id, field, value) {
+            const item = bulkXuatItems.find(i => i.id === id);
+            if (item) {
+                item[field] = field === 'product_id' ? parseInt(value) : parseInt(value);
+            }
+            renderBulkXuatList();
+        }
+        
+        function renderBulkNhapList() {
+            const container = document.getElementById('bulk-nhap-list');
+            const pageProducts = products.filter(p => p.page === currentPage);
+            
+            if (bulkNhapItems.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="padding: 20px;"><div class="empty-state-text" style="font-size: 14px;">Chưa có sản phẩm nào. Click "Thêm Sản Phẩm" để bắt đầu.</div></div>';
+                document.getElementById('bulk-nhap-count').textContent = '0';
+                return;
+            }
+            
+            container.innerHTML = bulkNhapItems.map(item => `
+                <div class="bulk-item">
+                    <select class="form-control" onchange="updateBulkNhapItem(${item.id}, 'product_id', this.value)" style="font-size: 14px; padding: 8px 12px; min-height: 36px;">
+                        <option value="">-- Chọn sản phẩm --</option>
+                        ${pageProducts.map(p => `<option value="${p.id}" ${item.product_id === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                    </select>
+                    <div class="bulk-item-quantity">
+                        <span style="font-size: 13px; color: var(--text-secondary);">SL:</span>
+                        <input type="number" class="bulk-qty-input" value="${item.quantity}" min="1" onchange="updateBulkNhapItem(${item.id}, 'quantity', this.value)">
+                    </div>
+                    <button class="bulk-remove-btn" onclick="removeBulkNhapItem(${item.id})">🗑️</button>
+                </div>
+            `).join('');
+            
+            document.getElementById('bulk-nhap-count').textContent = bulkNhapItems.length;
+        }
+        
+        function renderBulkXuatList() {
+            const container = document.getElementById('bulk-xuat-list');
+            const pageProducts = products.filter(p => p.page === currentPage);
+            const pageInventory = inventory[currentPage] || {};
+            
+            if (bulkXuatItems.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="padding: 20px;"><div class="empty-state-text" style="font-size: 14px;">Chưa có sản phẩm nào. Click "Thêm Sản Phẩm" để bắt đầu.</div></div>';
+                document.getElementById('bulk-xuat-count').textContent = '0';
+                return;
+            }
+            
+            container.innerHTML = bulkXuatItems.map(item => {
+                const currentInv = item.product_id ? (pageInventory[item.product_id] || 0) : 0;
+                return `
+                    <div class="bulk-item">
+                        <select class="form-control" onchange="updateBulkXuatItem(${item.id}, 'product_id', this.value)" style="font-size: 14px; padding: 8px 12px; min-height: 36px;">
+                            <option value="">-- Chọn sản phẩm --</option>
+                            ${pageProducts.map(p => {
+                                const inv = pageInventory[p.id] || 0;
+                                return `<option value="${p.id}" ${item.product_id === p.id ? 'selected' : ''}>${p.name} (TK: ${inv})</option>`;
+                            }).join('')}
+                        </select>
+                        <div class="bulk-item-quantity">
+                            <span style="font-size: 13px; color: var(--text-secondary);">SL:</span>
+                            <input type="number" class="bulk-qty-input" value="${item.quantity}" min="1" max="${currentInv}" onchange="updateBulkXuatItem(${item.id}, 'quantity', this.value)">
+                        </div>
+                        <button class="bulk-remove-btn" onclick="removeBulkXuatItem(${item.id})">🗑️</button>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('bulk-xuat-count').textContent = bulkXuatItems.length;
+        }
+        
+        async function handleBulkNhap() {
+            if (bulkNhapItems.length === 0) {
+                showToast('error', 'Chưa có sản phẩm nào!');
+                return;
+            }
+            
+            // Validate all items
+            for (const item of bulkNhapItems) {
+                if (!item.product_id || !item.quantity) {
+                    showToast('error', 'Vui lòng điền đầy đủ thông tin!');
+                    return;
+                }
+            }
+            
+            const commonNote = document.getElementById('bulk-nhap-note').value;
+            
+            try {
+                showLoading();
+                let successCount = 0;
+                let failCount = 0;
+                
+                // Process each item sequentially (giữ cấu trúc data hiện tại)
+                for (const item of bulkNhapItems) {
+                    try {
+                        const product = products.find(p => p.id === item.product_id);
+                        const note = commonNote ? `${commonNote} - ${product?.name}` : product?.name;
+                        
+                        const response = await apiCall('transactions', 'POST', {
+                            type: 'nhap',
+                            product_id: item.product_id,
+                            quantity: item.quantity,
+                            note: note,
+                        });
+                        
+                        if (response.success) {
+                            successCount++;
+                        } else {
+                            failCount++;
+                        }
+                    } catch (error) {
+                        failCount++;
+                        console.error('Bulk nhap item error:', error);
+                    }
+                }
+                
+                // Reload data
+                await loadTransactions();
+                await loadInventory();
+                updateDashboard();
+                
+                // Clear bulk list
+                bulkNhapItems = [];
+                renderBulkNhapList();
+                document.getElementById('bulk-nhap-note').value = '';
+                
+                showToast('success', `✅ Nhập ${successCount} sản phẩm thành công${failCount > 0 ? `, ${failCount} thất bại` : ''}!`);
+                
+            } catch (error) {
+                showToast('error', 'Lỗi: ' + error.message);
+                logError('Bulk Nhap Error', error);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function handleBulkXuat() {
+            if (bulkXuatItems.length === 0) {
+                showToast('error', 'Chưa có sản phẩm nào!');
+                return;
+            }
+            
+            // Validate all items
+            for (const item of bulkXuatItems) {
+                if (!item.product_id || !item.quantity) {
+                    showToast('error', 'Vui lòng điền đầy đủ thông tin!');
+                    return;
+                }
+                
+                // Check inventory
+                const currentInv = inventory[currentPage]?.[item.product_id] || 0;
+                if (currentInv < item.quantity) {
+                    const product = products.find(p => p.id === item.product_id);
+                    showToast('error', `Không đủ hàng: ${product?.name} (TK: ${currentInv})`);
+                    return;
+                }
+            }
+            
+            const commonNote = document.getElementById('bulk-xuat-note').value;
+            
+            try {
+                showLoading();
+                let successCount = 0;
+                let failCount = 0;
+                
+                // Process each item sequentially (giữ cấu trúc data hiện tại)
+                for (const item of bulkXuatItems) {
+                    try {
+                        const product = products.find(p => p.id === item.product_id);
+                        const note = commonNote ? `${commonNote} - ${product?.name}` : product?.name;
+                        
+                        const response = await apiCall('transactions', 'POST', {
+                            type: 'xuat',
+                            product_id: item.product_id,
+                            quantity: item.quantity,
+                            note: note,
+                        });
+                        
+                        if (response.success) {
+                            successCount++;
+                        } else {
+                            failCount++;
+                        }
+                    } catch (error) {
+                        failCount++;
+                        console.error('Bulk xuat item error:', error);
+                    }
+                }
+                
+                // Reload data
+                await loadTransactions();
+                await loadInventory();
+                updateDashboard();
+                
+                // Clear bulk list
+                bulkXuatItems = [];
+                renderBulkXuatList();
+                document.getElementById('bulk-xuat-note').value = '';
+                
+                showToast('success', `✅ Xuất ${successCount} sản phẩm thành công${failCount > 0 ? `, ${failCount} thất bại` : ''}!`);
+                
+            } catch (error) {
+                showToast('error', 'Lỗi: ' + error.message);
+                logError('Bulk Xuat Error', error);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // ===== BULK/SINGLE SWITCH FUNCTIONS =====
+        
+        function switchToBulkNhap() {
+            showSection('nhap-bulk');
+            // Auto add first row if empty
+            if (bulkNhapItems.length === 0) {
+                addBulkNhapRow();
+            }
+        }
+        
+        function switchToBulkXuat() {
+            showSection('xuat-bulk');
+            // Auto add first row if empty
+            if (bulkXuatItems.length === 0) {
+                addBulkXuatRow();
+            }
+        }
+        
+        function switchToSingleNhap() {
+            showSection('nhap');
+        }
+        
+        function switchToSingleXuat() {
+            showSection('xuat');
         }
         
         // Call when authorized
