@@ -1,6 +1,6 @@
 -- ============================================
 -- XUẤT NHẬP HÀNG - SUPABASE ALL-IN-ONE SCHEMA
--- Version: 3.0.1
+-- Version: 3.0.2 - Clean (No mock data, Vietnamese messages)
 -- Date: 2025-11-28
 -- ============================================
 
@@ -272,7 +272,7 @@ BEGIN
         ELSE
             result := json_build_object(
                 'success', false,
-                'message', 'Unknown endpoint: ' || p_endpoint
+                'message', 'Endpoint không hợp lệ: ' || p_endpoint
             );
     END CASE;
 
@@ -300,7 +300,7 @@ BEGIN
     IF p_page IS NULL OR p_name IS NULL OR p_unit IS NULL THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Missing required fields: page, name, unit'
+            'message', 'Thiếu thông tin bắt buộc: page, name, unit'
         );
     END IF;
 
@@ -324,14 +324,14 @@ BEGIN
 
     RETURN json_build_object(
         'success', true,
-        'message', CASE WHEN v_is_update THEN 'Product updated' ELSE 'Product created' END,
+        'message', CASE WHEN v_is_update THEN 'Cập nhật sản phẩm thành công' ELSE 'Thêm sản phẩm thành công' END,
         'data', json_build_object('id', v_product_id)
     );
 EXCEPTION
     WHEN OTHERS THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Error: ' || SQLERRM
+            'message', 'Lỗi: ' || SQLERRM
         );
 END;
 $$ LANGUAGE plpgsql;
@@ -356,21 +356,21 @@ BEGIN
     IF p_page IS NULL OR p_type IS NULL OR p_product_id IS NULL OR p_quantity IS NULL THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Missing required fields'
+            'message', 'Thiếu thông tin bắt buộc'
         );
     END IF;
 
     IF p_type NOT IN ('nhap', 'xuat') THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Invalid type: must be nhap or xuat'
+            'message', 'Loại giao dịch không hợp lệ: phải là nhap hoặc xuat'
         );
     END IF;
 
     IF p_quantity = 0 THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Quantity cannot be zero'
+            'message', 'Số lượng không được bằng 0'
         );
     END IF;
 
@@ -378,7 +378,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM products WHERE id = p_product_id) THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Product not found'
+            'message', 'Không tìm thấy sản phẩm'
         );
     END IF;
 
@@ -410,7 +410,7 @@ EXCEPTION
     WHEN OTHERS THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Error: ' || SQLERRM
+            'message', 'Lỗi: ' || SQLERRM
         );
 END;
 $$ LANGUAGE plpgsql;
@@ -436,7 +436,7 @@ BEGIN
             IF p_id IS NULL THEN
                 RETURN json_build_object(
                     'success', false,
-                    'message', 'Missing id for delete'
+                    'message', 'Thiếu id để xóa'
                 );
             END IF;
 
@@ -444,7 +444,7 @@ BEGIN
 
             RETURN json_build_object(
                 'success', true,
-                'message', 'Location deleted successfully'
+                'message', 'Xóa khu vực thành công'
             );
 
         -- Upsert action
@@ -452,7 +452,7 @@ BEGIN
             IF p_page IS NULL OR p_name IS NULL THEN
                 RETURN json_build_object(
                     'success', false,
-                    'message', 'Missing required fields: page, name'
+                    'message', 'Thiếu thông tin bắt buộc: page, name'
                 );
             END IF;
 
@@ -470,21 +470,21 @@ BEGIN
 
             RETURN json_build_object(
                 'success', true,
-                'message', CASE WHEN p_id IS NOT NULL THEN 'Location updated' ELSE 'Location created' END,
+                'message', CASE WHEN p_id IS NOT NULL THEN 'Cập nhật khu vực thành công' ELSE 'Thêm khu vực thành công' END,
                 'data', json_build_object('id', v_location_id)
             );
 
         ELSE
             RETURN json_build_object(
                 'success', false,
-                'message', 'Invalid action: must be upsert or delete'
+                'message', 'Hành động không hợp lệ: phải là upsert hoặc delete'
             );
     END CASE;
 EXCEPTION
     WHEN OTHERS THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Error: ' || SQLERRM
+            'message', 'Lỗi: ' || SQLERRM
         );
 END;
 $$ LANGUAGE plpgsql;
@@ -514,28 +514,28 @@ BEGIN
        p_bandwidth_change IS NULL OR p_bandwidth_after IS NULL THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Missing required fields'
+            'message', 'Thiếu thông tin bắt buộc'
         );
     END IF;
 
     IF p_network_type NOT IN ('doanh_nghiep', 'gia_dinh') THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Invalid network_type'
+            'message', 'Loại mạng không hợp lệ'
         );
     END IF;
 
     IF p_provider NOT IN ('ezecom', 'today', 'sinet', 'mekong', 'telnet', 'online', 'metfone', 'other') THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Invalid provider'
+            'message', 'Nhà cung cấp không hợp lệ'
         );
     END IF;
 
     IF p_event_type NOT IN ('moi', 'tang', 'giam', 'chuyen') THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Invalid event_type'
+            'message', 'Loại sự kiện không hợp lệ'
         );
     END IF;
 
@@ -560,14 +560,14 @@ BEGIN
 
     RETURN json_build_object(
         'success', true,
-        'message', 'Bandwidth log created successfully',
+        'message', 'Thêm log băng thông thành công',
         'data', json_build_object('id', v_log_id)
     );
 EXCEPTION
     WHEN OTHERS THEN
         RETURN json_build_object(
             'success', false,
-            'message', 'Error: ' || SQLERRM
+            'message', 'Lỗi: ' || SQLERRM
         );
 END;
 $$ LANGUAGE plpgsql;
@@ -594,7 +594,7 @@ BEGIN
         RETURN json_build_object(
             'success', false,
             'allowed', false,
-            'message', 'User not found'
+            'message', 'Không tìm thấy người dùng'
         );
     END IF;
 
@@ -628,31 +628,6 @@ CREATE TRIGGER trigger_refresh_inventory
 AFTER INSERT OR UPDATE OR DELETE ON transactions
 FOR EACH STATEMENT
 EXECUTE FUNCTION auto_refresh_inventory();
-
--- ============================================
--- SAMPLE DATA (Optional - for testing)
--- ============================================
-
--- Insert sample user
-INSERT INTO allowed_users (user_id, pages) VALUES
-('123456789', 'RR88,XX88,MM88')
-ON CONFLICT (user_id) DO NOTHING;
-
--- Insert sample products
-INSERT INTO products (page, name, unit, description) VALUES
-('RR88', 'Sản phẩm A', 'Thùng', 'Mô tả sản phẩm A'),
-('RR88', 'Sản phẩm B', 'Cái', 'Mô tả sản phẩm B'),
-('XX88', 'Sản phẩm C', 'Kg', 'Mô tả sản phẩm C')
-ON CONFLICT (page, name) DO NOTHING;
-
--- Insert sample locations
-INSERT INTO locations (page, name, description) VALUES
-('RR88', 'Văn phòng tầng 8', 'Văn phòng chính'),
-('RR88', 'KTX tầng 7', 'Ký túc xá sinh viên')
-ON CONFLICT (page, name) DO NOTHING;
-
--- Refresh inventory
-SELECT refresh_inventory();
 
 -- ============================================
 -- VERIFY INSTALLATION
@@ -720,9 +695,9 @@ SELECT api_check_user('123456789', 'RR88');
 -- Success message
 DO $$
 BEGIN
-    RAISE NOTICE '✅ Supabase schema installed successfully!';
-    RAISE NOTICE '📊 Tables: 5 (allowed_users, products, locations, transactions, bandwidth_logs)';
-    RAISE NOTICE '🔧 Functions: 6 (api_get, api_post_product, api_post_transaction, api_post_location, api_post_bandwidth, api_check_user)';
-    RAISE NOTICE '⚡ Triggers: 1 (auto_refresh_inventory)';
-    RAISE NOTICE '📖 View SETUP_GUIDE_SUPABASE.md for n8n workflow setup';
+    RAISE NOTICE '✅ Cài đặt Supabase schema thành công!';
+    RAISE NOTICE '📊 Bảng dữ liệu: 5 (allowed_users, products, locations, transactions, bandwidth_logs)';
+    RAISE NOTICE '🔧 Hàm: 6 (api_get, api_post_product, api_post_transaction, api_post_location, api_post_bandwidth, api_check_user)';
+    RAISE NOTICE '⚡ Trigger: 1 (auto_refresh_inventory)';
+    RAISE NOTICE '📖 Xem SETUP_GUIDE_SUPABASE.md để thiết lập n8n workflow';
 END $$;
