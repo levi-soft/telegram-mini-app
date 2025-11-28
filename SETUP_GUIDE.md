@@ -651,18 +651,21 @@ Click **Create Table** → Tên: `bandwidth_logs`
 **Columns:**
 - `page` - Text - Required (RR88 | XX88 | MM88)
 - `location` - Text - Required (Tên khu vực: VD "Văn phòng tầng 8", "KTX tầng 7")
-- `event_type` - Text - Required ("tang" | "giam" | "khac")
+- `event_type` - Text - Required ("moi" | "tang" | "giam")
+  - "moi" = Lắp đặt mạng mới
+  - "tang" = Tăng băng thông
+  - "giam" = Giảm băng thông
 - `bandwidth_change` - Number - Required (Số thay đổi: +100, -50, etc.)
-- `bandwidth_after` - Number - Required (Băng thông sau khi thay đổi)
+- `bandwidth_after` - Number - Required (Băng thông sau khi thay đổi - TỰ ĐỘNG TÍNH)
 - `note` - Text - Optional (Ghi chú chi tiết)
 - `user` - Text - Required (first_name từ Telegram - real-time)
 - `timestamp` - Date - Auto
 
 **Sample data:**
 ```
-RR88 | Văn phòng tầng 8 | tang | 100 | 750 | Nâng cấp gói cước | Admin | 2025-11-28
-XX88 | KTX tầng 7 | giam | -10 | 60 | Giảm do cắt dịch vụ | Staff | 2025-11-27
-MM88 | Nhà kho | tang | 50 | 200 | Thêm đường truyền dự phòng | Admin | 2025-11-26
+RR88 | Văn phòng tầng 8 | moi  | 750  | 750  | Lắp mạng VNPT gói 750Mbps          | Admin | 2025-11-28
+RR88 | Văn phòng tầng 8 | tang | 100  | 850  | Nâng cấp từ 750Mbps lên 850Mbps    | Admin | 2025-11-29
+XX88 | KTX tầng 7       | giam | -10  | 60   | Giảm do hết hợp đồng dịch vụ cũ   | Staff | 2025-11-27
 ```
 
 ---
@@ -749,12 +752,12 @@ if (!body.location || !body.event_type || !body.bandwidth_change || !body.bandwi
 }
 
 // Validate event_type
-const validTypes = ['tang', 'giam', 'khac'];
+const validTypes = ['moi', 'tang', 'giam'];
 if (!validTypes.includes(body.event_type)) {
   return [{
     json: {
       success: false,
-      message: 'Loại sự kiện không hợp lệ'
+      message: 'Loại sự kiện không hợp lệ (phải là: moi, tang, hoặc giam)'
     }
   }];
 }
@@ -887,31 +890,34 @@ Body (JSON):
 
 ### 7.6. Ví Dụ Use Cases
 
-**Use Case 1: Tăng băng thông**
+**Use Case 1: Lắp đặt mạng mới (event_type="moi")**
 ```
 Khu vực: Văn phòng tầng 8
-Loại: Tăng
-Thay đổi: +100 Mbps
-Sau: 750 Mbps
-Ghi chú: Nâng cấp gói cước từ 650Mbps lên 750Mbps
+Loại: 🆕 Lắp Đặt Mới
+Băng thông hiện tại: 0 Mbps (chưa có mạng)
+Thay đổi: 750 Mbps (nhập gói băng thông mới)
+Sau: 750 Mbps (tự động = |thay đổi|)
+Ghi chú: Lắp mạng VNPT gói cước doanh nghiệp 750Mbps
 ```
 
-**Use Case 2: Giảm băng thông**
+**Use Case 2: Tăng băng thông (event_type="tang")**
+```
+Khu vực: Văn phòng tầng 8
+Loại: 📈 Tăng Băng Thông
+Băng thông hiện tại: 750 Mbps (đã có sẵn)
+Thay đổi: +100 Mbps
+Sau: 850 Mbps (tự động = 750 + 100)
+Ghi chú: Nâng cấp gói cước từ 750Mbps lên 850Mbps
+```
+
+**Use Case 3: Giảm băng thông (event_type="giam")**
 ```
 Khu vực: KTX tầng 7
-Loại: Giảm
+Loại: 📉 Giảm Băng Thông
+Băng thông hiện tại: 70 Mbps
 Thay đổi: -10 Mbps
-Sau: 60 Mbps
-Ghi chú: Cắt giảm do hết hợp đồng dịch vụ cũ
-```
-
-**Use Case 3: Sự kiện khác**
-```
-Khu vực: Nhà kho
-Loại: Khác
-Thay đổi: 0 Mbps
-Sau: 200 Mbps
-Ghi chú: Kiểm tra đường truyền định kỳ
+Sau: 60 Mbps (tự động = 70 - 10)
+Ghi chú: Giảm do hết hợp đồng dịch vụ cũ, chuyển gói rẻ hơn
 ```
 
 ---
@@ -1223,6 +1229,26 @@ Body (JSON):
 
 ---
 
-**Version:** 2.5.0
+**Version:** 2.6.0
 **Updated:** 2025-11-28
 **Contact Admin:** https://t.me/PinusITRR88
+
+---
+
+## 📝 Changelog v2.6.0
+
+### UI/UX Improvements:
+- ✅ Navigation buttons: 2 cột → 3 cột trên mobile (tối ưu không gian)
+- ✅ Thu gọn tab "Bộ Lọc & Tổng Hợp" (giảm padding, font size)
+- ✅ Responsive cho màn hình nhỏ
+
+### Bandwidth Tracking Enhancements:
+- ✅ Loại sự kiện: "Tăng/Giảm/Khác" → "Mới/Tăng/Giảm"
+  - 🆕 "Lắp Đặt Mới" - cho khu vực chưa có mạng
+  - 📈 "Tăng Băng Thông" - nâng cấp gói cước
+  - 📉 "Giảm Băng Thông" - hạ gói cước
+- ✅ Băng thông sau thay đổi: **TỰ ĐỘNG TÍNH TOÁN** (giống inventory)
+  - Hiển thị băng thông hiện tại của khu vực
+  - Tự động tính: Sau = Hiện tại + Thay đổi
+  - Đặc biệt: Lắp mới = |Thay đổi| (bỏ qua hiện tại)
+- ✅ Readonly fields để tránh nhập sai

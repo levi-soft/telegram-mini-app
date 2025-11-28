@@ -790,12 +790,12 @@
         .time-filter-buttons {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: var(--space-sm);
+            gap: 6px;
+            margin-bottom: 10px;
         }
 
         .time-filter-btn {
-            padding: 10px;
+            padding: 8px 6px;
             border: 1px solid var(--separator);
             background: var(--bg-secondary);
             border-radius: 8px;
@@ -804,8 +804,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 3px;
-            min-height: 64px;
+            gap: 2px;
+            min-height: 50px;
             position: relative;
             overflow: hidden;
         }
@@ -835,29 +835,29 @@
         }
 
         .filter-icon {
-            font-size: 20px;
+            font-size: 18px;
         }
 
         .filter-label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
         }
 
         .filter-sublabel {
-            font-size: 10px;
-            opacity: 0.8;
+            font-size: 9px;
+            opacity: 0.75;
         }
 
         .time-range-display {
-            padding: 14px;
+            padding: 10px;
             background: var(--bg-tertiary);
-            border-radius: 10px;
+            border-radius: 8px;
             text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            font-size: 14px;
+            gap: 6px;
+            font-size: 12px;
             font-weight: 500;
             border: 1px solid var(--border);
         }
@@ -866,21 +866,21 @@
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 6px;
         }
 
         .summary-card {
             background: var(--bg-secondary);
             border-radius: var(--border-radius);
-            padding: 14px 10px;
+            padding: 10px 6px;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 6px;
+            gap: 4px;
             box-shadow: var(--shadow-card);
             border: 1px solid var(--border);
-            border-top: 3px solid var(--primary);
+            border-top: 2px solid var(--primary);
             position: relative;
             overflow: hidden;
         }
@@ -905,28 +905,28 @@
         }
 
         .summary-icon {
-            font-size: 28px;
+            font-size: 22px;
         }
 
         .summary-label {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-secondary);
             font-weight: 500;
         }
 
         .summary-value {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--text-primary);
             letter-spacing: -0.5px;
         }
 
         .summary-trend {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
 
         .summary-trend.up {
@@ -1252,13 +1252,22 @@
             }
             
             .nav {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-                padding: 12px;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+                padding: 8px;
             }
             
             .nav-btn {
-                min-height: 70px;
+                min-height: 60px;
+                padding: 6px 4px;
+            }
+
+            .nav-btn-icon {
+                font-size: 20px;
+            }
+
+            .nav-btn-text {
+                font-size: 9px;
             }
             
             .content {
@@ -1690,10 +1699,17 @@
                             <label class="form-label">Loại Sự Kiện</label>
                             <select class="form-control" id="bt-event-type" required>
                                 <option value="">-- Chọn loại sự kiện --</option>
+                                <option value="moi">🆕 Lắp Đặt Mới</option>
                                 <option value="tang">📈 Tăng Băng Thông</option>
                                 <option value="giam">📉 Giảm Băng Thông</option>
-                                <option value="khac">📝 Khác</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Băng Thông Hiện Tại (Mbps)</label>
+                            <input type="number" class="form-control" id="bt-current" value="0" min="0" step="0.1" readonly style="background: var(--bg-tertiary); opacity: 0.7;">
+                            <small style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px; display: block;">
+                                Băng thông hiện tại của khu vực đã chọn
+                            </small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Thay Đổi (Mbps)</label>
@@ -1704,7 +1720,10 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Băng Thông Sau Thay Đổi (Mbps)</label>
-                            <input type="number" class="form-control" id="bt-after" placeholder="VD: 750" min="0" step="0.1" required>
+                            <input type="number" class="form-control" id="bt-after" value="0" min="0" step="0.1" readonly style="background: var(--bg-tertiary); font-weight: 600; font-size: 16px;">
+                            <small style="color: var(--success); font-size: 12px; margin-top: 4px; display: block;">
+                                ✓ Tự động tính toán = Hiện tại + Thay đổi
+                            </small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Ghi Chú</label>
@@ -2087,6 +2106,22 @@
                 btnAddLocation.addEventListener('click', () => openLocationModal());
             }
 
+            // Bandwidth auto-calculation
+            const btLocation = document.getElementById('bt-location');
+            if (btLocation) {
+                btLocation.addEventListener('change', updateCurrentBandwidth);
+            }
+
+            const btChange = document.getElementById('bt-change');
+            if (btChange) {
+                btChange.addEventListener('input', calculateBandwidthAfter);
+            }
+
+            const btEventType = document.getElementById('bt-event-type');
+            if (btEventType) {
+                btEventType.addEventListener('change', calculateBandwidthAfter);
+            }
+
             // Setup modal listeners
             setupModalListeners();
         }
@@ -2328,6 +2363,53 @@
                 option.textContent = loc.name;
                 dropdown.appendChild(option);
             });
+        }
+
+        function updateCurrentBandwidth() {
+            const locationSelect = document.getElementById('bt-location');
+            const currentInput = document.getElementById('bt-current');
+            const changeInput = document.getElementById('bt-change');
+
+            if (!locationSelect || !currentInput) return;
+
+            const selectedLocation = locationSelect.value;
+            if (!selectedLocation) {
+                currentInput.value = 0;
+                calculateBandwidthAfter();
+                return;
+            }
+
+            // Get current bandwidth from currentBandwidth object
+            const locationData = currentBandwidth[selectedLocation];
+            const currentBW = locationData ? locationData.bandwidth : 0;
+            currentInput.value = currentBW;
+
+            // Trigger calculation
+            calculateBandwidthAfter();
+        }
+
+        function calculateBandwidthAfter() {
+            const currentInput = document.getElementById('bt-current');
+            const changeInput = document.getElementById('bt-change');
+            const afterInput = document.getElementById('bt-after');
+            const eventTypeSelect = document.getElementById('bt-event-type');
+
+            if (!currentInput || !changeInput || !afterInput || !eventTypeSelect) return;
+
+            const current = parseFloat(currentInput.value) || 0;
+            const change = parseFloat(changeInput.value) || 0;
+            const eventType = eventTypeSelect.value;
+
+            let result = 0;
+            if (eventType === 'moi') {
+                // Lắp mới: băng thông sau = số thay đổi (bỏ qua hiện tại)
+                result = Math.abs(change);
+            } else {
+                // Tăng/Giảm: băng thông sau = hiện tại + thay đổi
+                result = current + change;
+            }
+
+            afterInput.value = Math.max(0, result); // Không cho âm
         }
 
         // Form Handlers
@@ -3306,8 +3388,21 @@
                 const changeValue = log.bandwidth_change;
                 const changeText = changeValue > 0 ? `+${changeValue}` : `${changeValue}`;
                 const changeColor = changeValue > 0 ? 'var(--success)' : 'var(--danger)';
-                const eventIcon = log.event_type === 'tang' ? '📈' : log.event_type === 'giam' ? '📉' : '📝';
-                const eventText = log.event_type === 'tang' ? 'Tăng' : log.event_type === 'giam' ? 'Giảm' : 'Khác';
+
+                let eventIcon, eventText;
+                if (log.event_type === 'moi') {
+                    eventIcon = '🆕';
+                    eventText = 'Lắp Mới';
+                } else if (log.event_type === 'tang') {
+                    eventIcon = '📈';
+                    eventText = 'Tăng';
+                } else if (log.event_type === 'giam') {
+                    eventIcon = '📉';
+                    eventText = 'Giảm';
+                } else {
+                    eventIcon = '📝';
+                    eventText = 'Khác';
+                }
 
                 return `
                     <div class="list-item">
