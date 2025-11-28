@@ -3494,7 +3494,7 @@
         // Băng Thông Functions
         async function loadBandwidthLogs() {
             try {
-                const response = await apiCall('bandwidth_logs&page=' + currentPage, 'GET');
+                const response = await apiCall('bandwidth_logs', 'GET');
                 if (response.success) {
                     bandwidthLogs = response.data || [];
                     calculateCurrentBandwidth();
