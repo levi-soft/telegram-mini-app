@@ -640,6 +640,589 @@ return [{
 
 ---
 
-**Version:** 2.3.0
-**Updated:** 2025-11-10
+## BƯỚC 7: Setup API Băng Thông (Bandwidth Tracking)
+
+### 7.1. Tạo Data Table "bandwidth_logs"
+
+Vào n8n → **Settings** → **Data Tables**
+
+Click **Create Table** → Tên: `bandwidth_logs`
+
+**Columns:**
+- `page` - Text - Required (RR88 | XX88 | MM88)
+- `location` - Text - Required (Tên khu vực: VD "Văn phòng tầng 8", "KTX tầng 7")
+- `event_type` - Text - Required ("tang" | "giam" | "khac")
+- `bandwidth_change` - Number - Required (Số thay đổi: +100, -50, etc.)
+- `bandwidth_after` - Number - Required (Băng thông sau khi thay đổi)
+- `note` - Text - Optional (Ghi chú chi tiết)
+- `user` - Text - Required (first_name từ Telegram - real-time)
+- `timestamp` - Date - Auto
+
+**Sample data:**
+```
+RR88 | Văn phòng tầng 8 | tang | 100 | 750 | Nâng cấp gói cước | Admin | 2025-11-28
+XX88 | KTX tầng 7 | giam | -10 | 60 | Giảm do cắt dịch vụ | Staff | 2025-11-27
+MM88 | Nhà kho | tang | 50 | 200 | Thêm đường truyền dự phòng | Admin | 2025-11-26
+```
+
+---
+
+### 7.2. Thêm Endpoint vào API GET Workflow
+
+Vào workflow: `XuatNhapHang-API-GET`
+
+#### 7.2.1. Update Switch Node
+
+Thêm **Rule mới** vào Switch node (sau 3 rules hiện tại):
+
+**Rule 4 - GET Bandwidth Logs:**
+- Value 1: `{{ $json.query.endpoint }}`
+- Operation: **Equal**
+- Value 2: `bandwidth_logs`
+
+#### 7.2.2. Output 4 - GET Bandwidth Logs Flow
+
+**Node 1: Get Many**
+- Table: **bandwidth_logs**
+- Filter: `page` Equal `{{ $json.query.page }}`
+- Return All: **Yes**
+- Sort: `timestamp` Descending
+
+→ **Node 2: Code** (Format response):
+```javascript
+const logs = $input.all().map(item => {
+  const log = item.json;
+  return {
+    id: log.id,
+    page: log.page,
+    location: log.location,
+    event_type: log.event_type,
+    bandwidth_change: log.bandwidth_change,
+    bandwidth_after: log.bandwidth_after,
+    note: log.note || '',
+    user: log.user,
+    timestamp: log.timestamp
+  };
+});
+
+return [{
+  json: {
+    success: true,
+    data: logs
+  }
+}];
+```
+
+→ **Respond to Webhook**
+
+**Save workflow!**
+
+---
+
+### 7.3. Thêm Endpoint vào API POST Workflow
+
+Vào workflow: `XuatNhapHang-API-POST`
+
+#### 7.3.1. Update Switch Node
+
+Thêm **Rule mới** vào Switch node (sau rules hiện tại):
+
+**Rule - POST Bandwidth Log:**
+- Value 1: `{{ $json.query.endpoint }}`
+- Operation: **Equal**
+- Value 2: `bandwidth_logs`
+
+#### 7.3.2. Output - POST Bandwidth Log Flow
+
+**Node 1: Code** (Validate & Prepare):
+```javascript
+const body = $input.first().json.body;
+
+// Validate required fields
+if (!body.location || !body.event_type || !body.bandwidth_change || !body.bandwidth_after) {
+  return [{
+    json: {
+      success: false,
+      message: 'Thiếu thông tin bắt buộc'
+    }
+  }];
+}
+
+// Validate event_type
+const validTypes = ['tang', 'giam', 'khac'];
+if (!validTypes.includes(body.event_type)) {
+  return [{
+    json: {
+      success: false,
+      message: 'Loại sự kiện không hợp lệ'
+    }
+  }];
+}
+
+return [{
+  json: {
+    page: body.page,
+    location: body.location,
+    event_type: body.event_type,
+    bandwidth_change: parseFloat(body.bandwidth_change),
+    bandwidth_after: parseFloat(body.bandwidth_after),
+    note: body.note || '',
+    user: body.user,
+    timestamp: new Date().toISOString()
+  }
+}];
+```
+
+→ **Node 2: Insert**
+- Table: **bandwidth_logs**
+- Data Mode: **Define Below**
+- Fields:
+  - page: `{{ $json.page }}`
+  - location: `{{ $json.location }}`
+  - event_type: `{{ $json.event_type }}`
+  - bandwidth_change: `{{ $json.bandwidth_change }}`
+  - bandwidth_after: `{{ $json.bandwidth_after }}`
+  - note: `{{ $json.note }}`
+  - user: `{{ $json.user }}`
+  - timestamp: `{{ $json.timestamp }}`
+
+→ **Node 3: Code** (Format success response):
+```javascript
+return [{
+  json: {
+    success: true,
+    message: 'Cập nhật băng thông thành công',
+    data: $input.first().json
+  }
+}];
+```
+
+→ **Respond to Webhook**
+
+**Save workflow!**
+
+---
+
+### 7.4. Test API Băng Thông
+
+#### Test GET - Lấy danh sách logs:
+
+```
+GET https://your-n8n.app/webhook/api?endpoint=bandwidth_logs&page=RR88&user_id=123456789
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "page": "RR88",
+      "location": "Văn phòng tầng 8",
+      "event_type": "tang",
+      "bandwidth_change": 100,
+      "bandwidth_after": 750,
+      "note": "Nâng cấp gói cước",
+      "user": "Admin",
+      "timestamp": "2025-11-28T10:30:00Z"
+    }
+  ]
+}
+```
+
+#### Test POST - Thêm log mới:
+
+```
+POST https://your-n8n.app/webhook/api?endpoint=bandwidth_logs&page=RR88&user_id=123456789
+
+Body (JSON):
+{
+  "page": "RR88",
+  "location": "Văn phòng tầng 8",
+  "event_type": "tang",
+  "bandwidth_change": 100,
+  "bandwidth_after": 750,
+  "note": "Nâng cấp gói cước",
+  "user": "Admin"
+}
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "message": "Cập nhật băng thông thành công",
+  "data": { ... }
+}
+```
+
+---
+
+### 7.5. Workflow Summary - Băng Thông
+
+**Updated Workflows:**
+1. ✅ **API GET** - Thêm Rule 4: GET bandwidth_logs
+2. ✅ **API POST** - Thêm Rule: POST bandwidth_logs
+
+**New Data Table:**
+- ✅ `bandwidth_logs` - 8 columns
+
+**Frontend Integration:**
+- ✅ Tab "Băng Thông" (đã có trong HTML)
+- ✅ Form cập nhật băng thông
+- ✅ Hiển thị băng thông hiện tại
+- ✅ Lịch sử thay đổi
+- ✅ Dashboard widget
+
+**Features:**
+- 📡 Theo dõi băng thông theo khu vực
+- 📈 Ghi lại sự kiện tăng/giảm băng thông
+- 📊 Hiển thị băng thông mới nhất trên Dashboard
+- 🔍 Tìm kiếm lịch sử theo khu vực
+- 👤 Tracking người cập nhật
+- 📝 Ghi chú chi tiết cho mỗi sự kiện
+
+---
+
+### 7.6. Ví Dụ Use Cases
+
+**Use Case 1: Tăng băng thông**
+```
+Khu vực: Văn phòng tầng 8
+Loại: Tăng
+Thay đổi: +100 Mbps
+Sau: 750 Mbps
+Ghi chú: Nâng cấp gói cước từ 650Mbps lên 750Mbps
+```
+
+**Use Case 2: Giảm băng thông**
+```
+Khu vực: KTX tầng 7
+Loại: Giảm
+Thay đổi: -10 Mbps
+Sau: 60 Mbps
+Ghi chú: Cắt giảm do hết hợp đồng dịch vụ cũ
+```
+
+**Use Case 3: Sự kiện khác**
+```
+Khu vực: Nhà kho
+Loại: Khác
+Thay đổi: 0 Mbps
+Sau: 200 Mbps
+Ghi chú: Kiểm tra đường truyền định kỳ
+```
+
+---
+
+### 7.7. Dashboard Display
+
+Sau khi setup xong, băng thông sẽ hiển thị trên Dashboard:
+
+**Card "📡 Băng Thông Hiện Tại":**
+```
+Văn phòng tầng 8: 750 Mbps
+KTX tầng 7: 60 Mbps
+Nhà kho: 200 Mbps
+```
+
+Admin có thể nhanh chóng nắm bắt tình trạng băng thông hiện tại của tất cả các khu vực!
+
+---
+
+## BƯỚC 8: Setup API Khu Vực (Location Management)
+
+### 8.1. Tạo Data Table "locations"
+
+Vào n8n → **Settings** → **Data Tables**
+
+Click **Create Table** → Tên: `locations`
+
+**Columns:**
+- `page` - Text - Required (RR88 | XX88 | MM88)
+- `name` - Text - Required (Tên khu vực: VD "Văn phòng tầng 8", "KTX tầng 7")
+- `description` - Text - Optional (Mô tả chi tiết khu vực)
+- `created_at` - Date - Auto
+
+**Sample data:**
+```
+RR88 | Văn phòng tầng 8 | Văn phòng chính tòa nhà A | 2025-11-28
+RR88 | KTX tầng 7 | Ký túc xá sinh viên | 2025-11-28
+XX88 | Nhà kho | Kho hàng tầng trệt | 2025-11-28
+MM88 | Phòng server | Phòng máy chủ tầng 5 | 2025-11-28
+```
+
+---
+
+### 8.2. Thêm Endpoint vào API GET Workflow
+
+Vào workflow: `XuatNhapHang-API-GET`
+
+#### 8.2.1. Update Switch Node
+
+Thêm **Rule mới** vào Switch node:
+
+**Rule 5 - GET Locations:**
+- Value 1: `{{ $json.query.endpoint }}`
+- Operation: **Equal**
+- Value 2: `locations`
+
+#### 8.2.2. Output 5 - GET Locations Flow
+
+**Node 1: Get Many**
+- Table: **locations**
+- Filter: `page` Equal `{{ $json.query.page }}`
+- Return All: **Yes**
+- Sort: `name` Ascending
+
+→ **Node 2: Code** (Format response):
+```javascript
+const locs = $input.all().map(item => {
+  const loc = item.json;
+  return {
+    id: loc.id,
+    page: loc.page,
+    name: loc.name,
+    description: loc.description || '',
+    created_at: loc.created_at
+  };
+});
+
+return [{
+  json: {
+    success: true,
+    data: locs
+  }
+}];
+```
+
+→ **Respond to Webhook**
+
+**Save workflow!**
+
+---
+
+### 8.3. Thêm Endpoint vào API POST Workflow
+
+Vào workflow: `XuatNhapHang-API-POST`
+
+#### 8.3.1. Update Switch Node
+
+Thêm **Rule mới** vào Switch node:
+
+**Rule - POST Location:**
+- Value 1: `{{ $json.query.endpoint }}`
+- Operation: **Equal**
+- Value 2: `locations`
+
+#### 8.3.2. Output - POST Location Flow
+
+**Node 1: Code** (Validate & Prepare):
+```javascript
+const body = $input.first().json.body;
+
+// Delete action
+if (body.action === 'delete') {
+  return [{
+    json: {
+      action: 'delete',
+      id: body.id
+    }
+  }];
+}
+
+// Add/Update action
+if (!body.name || !body.page) {
+  return [{
+    json: {
+      success: false,
+      message: 'Thiếu thông tin bắt buộc'
+    }
+  }];
+}
+
+return [{
+  json: {
+    id: body.id || null,
+    page: body.page,
+    name: body.name,
+    description: body.description || '',
+    created_at: new Date().toISOString()
+  }
+}];
+```
+
+→ **Node 2: IF** (Check action)
+- Condition: `{{ $json.action }}` Equal `delete`
+
+**IF TRUE (Delete):**
+→ **Node: Delete** (Data Tables)
+- Table: **locations**
+- Delete By: `id` Equal `{{ $json.id }}`
+
+→ **Node: Code** (Success response):
+```javascript
+return [{
+  json: {
+    success: true,
+    message: 'Xóa khu vực thành công'
+  }
+}];
+```
+
+**IF FALSE (Add/Update):**
+→ **Node: Upsert** (Data Tables)
+- Table: **locations**
+- Upsert By: `id`
+- Fields:
+  - id: `{{ $json.id }}`
+  - page: `{{ $json.page }}`
+  - name: `{{ $json.name }}`
+  - description: `{{ $json.description }}`
+  - created_at: `{{ $json.created_at }}`
+
+→ **Node: Code** (Success response):
+```javascript
+const isUpdate = $input.first().json.id;
+return [{
+  json: {
+    success: true,
+    message: isUpdate ? 'Cập nhật khu vực thành công' : 'Thêm khu vực thành công',
+    data: $input.first().json
+  }
+}];
+```
+
+**Merge both paths** → **Respond to Webhook**
+
+**Save workflow!**
+
+---
+
+### 8.4. Test API Khu Vực
+
+#### Test GET - Lấy danh sách locations:
+
+```
+GET https://your-n8n.app/webhook/api?endpoint=locations&page=RR88&user_id=123456789
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "page": "RR88",
+      "name": "Văn phòng tầng 8",
+      "description": "Văn phòng chính tòa nhà A",
+      "created_at": "2025-11-28T10:30:00Z"
+    }
+  ]
+}
+```
+
+#### Test POST - Thêm location mới:
+
+```
+POST https://your-n8n.app/webhook/api?endpoint=locations&page=RR88&user_id=123456789
+
+Body (JSON):
+{
+  "page": "RR88",
+  "name": "KTX tầng 7",
+  "description": "Ký túc xá sinh viên"
+}
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "message": "Thêm khu vực thành công",
+  "data": { ... }
+}
+```
+
+#### Test DELETE - Xóa location:
+
+```
+POST https://your-n8n.app/webhook/api?endpoint=locations&page=RR88&user_id=123456789
+
+Body (JSON):
+{
+  "action": "delete",
+  "id": 1
+}
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "message": "Xóa khu vực thành công"
+}
+```
+
+---
+
+### 8.5. Workflow Summary - Khu Vực
+
+**Updated Workflows:**
+1. ✅ **API GET** - Thêm Rule 5: GET locations
+2. ✅ **API POST** - Thêm Rule: POST locations (add/update/delete)
+
+**New Data Table:**
+- ✅ `locations` - 4 columns
+
+**Frontend Integration:**
+- ✅ Tab "Khu Vực" với CRUD đầy đủ
+- ✅ Form băng thông sử dụng dropdown khu vực
+- ✅ Tự động cập nhật dropdown khi thêm/sửa/xóa
+
+**Features:**
+- 📍 Quản lý danh mục khu vực (thêm/sửa/xóa)
+- 🔗 Liên kết với băng thông tracking
+- 🎯 Dropdown thông minh trong form băng thông
+- 🔍 Filter theo page (RR88, XX88, MM88)
+
+---
+
+## 📊 Final Summary
+
+**5 Workflows (Core + Extensions):**
+1. Frontend (GET app)
+2. API GET (products, transactions, inventory, **locations**, **bandwidth_logs**)
+3. API POST (products, transactions, **locations**, **bandwidth_logs**)
+4. Google Sheets Sync (Optional)
+
+**5 Data Tables:**
+1. products
+2. transactions
+3. allowed_users
+4. **locations** ⭐ NEW
+5. **bandwidth_logs** ⭐ NEW
+
+**Features:**
+- ✅ Inventory Management (Xuất Nhập Hàng)
+- ✅ Multi-warehouse Support (RR88, XX88, MM88)
+- ✅ User Authentication & Authorization
+- ✅ Google Sheets Integration
+- ✅ **Location Management** ⭐ NEW
+- ✅ **Bandwidth Tracking** ⭐ NEW
+- ✅ Dashboard Analytics with Bandwidth Display
+- ✅ Integrated Location & Bandwidth Features
+
+**Setup Time:**
+- Core features: 40-50 phút
+- + Google Sheets: +15-20 phút
+- **+ Location Management: +8-10 phút** ⭐
+- **+ Bandwidth Tracking: +10-15 phút** ⭐
+
+---
+
+**Version:** 2.5.0
+**Updated:** 2025-11-28
 **Contact Admin:** https://t.me/PinusITRR88

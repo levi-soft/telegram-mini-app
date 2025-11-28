@@ -1368,15 +1368,29 @@
                 <span class="nav-btn-icon">⚙️</span>
                 <span class="nav-btn-text">Danh Mục</span>
             </button>
+            <button class="nav-btn" data-section="khuvuc">
+                <span class="nav-btn-icon">📍</span>
+                <span class="nav-btn-text">Khu Vực</span>
+            </button>
+            <button class="nav-btn" data-section="bangthong">
+                <span class="nav-btn-icon">📡</span>
+                <span class="nav-btn-text">Băng Thông</span>
+            </button>
         </div>
 
         <!-- Content -->
         <div class="content">
             <!-- Dashboard Section -->
             <div class="section active" id="dashboard">
-                <!-- Time Filter -->
+                <!-- Băng Thông Hiện Tại -->
                 <div class="card">
-                    <div class="card-title">🔍 Bộ Lọc Thời Gian</div>
+                    <div class="card-title">📡 Băng Thông Hiện Tại</div>
+                    <div id="dashboard-bandwidth-list"></div>
+                </div>
+
+                <!-- Time Filter & Summary (Combined) -->
+                <div class="card">
+                    <div class="card-title">📊 Bộ Lọc & Tổng Hợp</div>
                     <div class="time-filter-buttons">
                         <button class="time-filter-btn" data-filter="day">
                             <span class="filter-icon">📅</span>
@@ -1398,12 +1412,7 @@
                         <span class="time-icon">📊</span>
                         <span id="time-range-text">Đang tải...</span>
                     </div>
-                </div>
-
-                <!-- Summary Cards with Trends -->
-                <div class="card">
-                    <div class="card-title">📊 Tổng Hợp</div>
-                    <div class="summary-grid">
+                    <div class="summary-grid" style="margin-top: 16px;">
                         <div class="summary-card success">
                             <div class="summary-icon">📥</div>
                             <div class="summary-content">
@@ -1649,6 +1658,81 @@
                     <div id="danhmuc-list"></div>
                 </div>
             </div>
+
+            <!-- Khu Vuc Section -->
+            <div class="section" id="khuvuc">
+                <div class="card">
+                    <div class="card-title">📍 Quản Lý Khu Vực</div>
+                    <button class="btn btn-primary" id="btn-add-location" style="margin-bottom: 16px;">
+                        <span>➕</span>
+                        <span>Thêm Khu Vực Mới</span>
+                    </button>
+                    <div id="khuvuc-list"></div>
+                </div>
+            </div>
+
+            <!-- Băng Thông Section -->
+            <div class="section" id="bangthong">
+                <!-- Form Cập Nhật Băng Thông -->
+                <div class="card">
+                    <div class="card-title">📡 Cập Nhật Băng Thông</div>
+                    <form id="form-bangthong">
+                        <div class="form-group">
+                            <label class="form-label">Khu Vực</label>
+                            <select class="form-control" id="bt-location" required>
+                                <option value="">-- Chọn khu vực --</option>
+                            </select>
+                            <small style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px; display: block;">
+                                Chưa có khu vực? <a href="#" onclick="switchSection('khuvuc'); return false;" style="color: var(--primary);">Thêm khu vực mới</a>
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Loại Sự Kiện</label>
+                            <select class="form-control" id="bt-event-type" required>
+                                <option value="">-- Chọn loại sự kiện --</option>
+                                <option value="tang">📈 Tăng Băng Thông</option>
+                                <option value="giam">📉 Giảm Băng Thông</option>
+                                <option value="khac">📝 Khác</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Thay Đổi (Mbps)</label>
+                            <input type="number" class="form-control" id="bt-change" placeholder="VD: +100 hoặc -50" step="0.1" required>
+                            <small style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px; display: block;">
+                                Nhập số dương để tăng (+), số âm để giảm (-)
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Băng Thông Sau Thay Đổi (Mbps)</label>
+                            <input type="number" class="form-control" id="bt-after" placeholder="VD: 750" min="0" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ghi Chú</label>
+                            <textarea class="form-control" id="bt-note" rows="3" placeholder="Mô tả chi tiết về sự kiện..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span>💾</span>
+                            <span>Lưu Cập Nhật</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Băng Thông Hiện Tại -->
+                <div class="card">
+                    <div class="card-title">📊 Băng Thông Hiện Tại Các Khu</div>
+                    <div id="current-bandwidth-list"></div>
+                </div>
+
+                <!-- Lịch Sử Băng Thông -->
+                <div class="card">
+                    <div class="card-title">🕐 Lịch Sử Thay Đổi</div>
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" id="search-bandwidth" placeholder="Tìm kiếm theo khu vực...">
+                    </div>
+                    <div id="bandwidth-history-list"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Loading Overlay -->
@@ -1687,6 +1771,31 @@
                     <button type="submit" class="btn btn-primary">
                         <span>💾</span>
                         <span>Lưu Sản Phẩm</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add/Edit Location Modal -->
+        <div class="modal" id="modal-location">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title" id="modal-location-title">Thêm Khu Vực</div>
+                    <button class="modal-close" onclick="closeModal('modal-location')">×</button>
+                </div>
+                <form id="form-location">
+                    <input type="hidden" id="location-id">
+                    <div class="form-group">
+                        <label class="form-label">Tên Khu Vực</label>
+                        <input type="text" class="form-control" id="location-name" placeholder="VD: Văn phòng tầng 8" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mô Tả</label>
+                        <input type="text" class="form-control" id="location-description" placeholder="Mô tả chi tiết khu vực (không bắt buộc)">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span>💾</span>
+                        <span>Lưu Khu Vực</span>
                     </button>
                 </form>
             </div>
@@ -1793,7 +1902,9 @@
                 await loadProducts();
                 await loadTransactions();
                 await loadInventory();
-                
+                await loadLocations();
+                await loadBandwidthLogs();
+
                 // Step 6: Setup listeners
                 setupEventListeners();
                 updateDashboard();
@@ -1898,6 +2009,8 @@
                         await loadProducts();
                         await loadTransactions();
                         await loadInventory();
+                        await loadLocations();
+                        await loadBandwidthLogs();
                         refreshCurrentSection();
                         hideLoading();
                     } catch (error) {
@@ -1932,17 +2045,32 @@
                 formProduct.addEventListener('submit', handleSaveProduct);
             }
 
+            const formLocation = document.getElementById('form-location');
+            if (formLocation) {
+                formLocation.addEventListener('submit', handleSaveLocation);
+            }
+
+            const formBangThong = document.getElementById('form-bangthong');
+            if (formBangThong) {
+                formBangThong.addEventListener('submit', handleBandwidthSubmit);
+            }
+
             // Search - với null check
             const searchTonKho = document.getElementById('search-tonkho');
             if (searchTonKho) {
                 searchTonKho.addEventListener('input', debounce(filterTonKho, 300));
             }
-            
+
             const searchLichSu = document.getElementById('search-lichsu');
             if (searchLichSu) {
                 searchLichSu.addEventListener('input', debounce(filterLichSu, 300));
             }
-            
+
+            const searchBandwidth = document.getElementById('search-bandwidth');
+            if (searchBandwidth) {
+                searchBandwidth.addEventListener('input', debounce(filterBandwidth, 300));
+            }
+
             const filterType = document.getElementById('filter-type');
             if (filterType) {
                 filterType.addEventListener('change', filterLichSu);
@@ -1953,7 +2081,12 @@
             if (btnAddProduct) {
                 btnAddProduct.addEventListener('click', () => openProductModal());
             }
-            
+
+            const btnAddLocation = document.getElementById('btn-add-location');
+            if (btnAddLocation) {
+                btnAddLocation.addEventListener('click', () => openLocationModal());
+            }
+
             // Setup modal listeners
             setupModalListeners();
         }
@@ -1992,6 +2125,13 @@
                     break;
                 case 'danhmuc':
                     displayDanhMuc();
+                    break;
+                case 'khuvuc':
+                    displayKhuVuc();
+                    break;
+                case 'bangthong':
+                    displayBandwidth();
+                    updateLocationDropdown();
                     break;
             }
         }
@@ -2160,6 +2300,36 @@
             }
         }
 
+        async function loadLocations() {
+            try {
+                const response = await apiCall('locations', 'GET');
+                if (response.success) {
+                    locations = response.data || [];
+                    updateLocationDropdown();
+                }
+            } catch (error) {
+                if (error.message !== 'Unauthorized') {
+                    logError('Load Locations Error', error);
+                    showToast('error', 'Không thể tải danh sách khu vực');
+                }
+                // Don't throw, continue
+            }
+        }
+
+        function updateLocationDropdown() {
+            const dropdown = document.getElementById('bt-location');
+            if (!dropdown) return;
+
+            const pageLocations = locations.filter(loc => loc.page === currentPage);
+            dropdown.innerHTML = '<option value="">-- Chọn khu vực --</option>';
+            pageLocations.forEach(loc => {
+                const option = document.createElement('option');
+                option.value = loc.name;
+                option.textContent = loc.name;
+                dropdown.appendChild(option);
+            });
+        }
+
         // Form Handlers
         async function handleNhapHang(e) {
             e.preventDefault();
@@ -2248,7 +2418,7 @@
 
         async function handleSaveProduct(e) {
             e.preventDefault();
-            
+
             const id = document.getElementById('product-id').value;
             const name = document.getElementById('product-name').value;
             const unit = document.getElementById('product-unit').value;
@@ -2256,7 +2426,7 @@
 
             try {
                 showLoading();
-                
+
                 const response = await apiCall('products', 'POST', {
                     id: id && id.trim() !== '' ? parseInt(id) : null, // Only send ID if exists
                     name: name,
@@ -2277,6 +2447,95 @@
             } catch (error) {
                 showToast('error', 'Lỗi: ' + error.message);
                 logError('Save Product Error', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Location CRUD Functions
+        function openLocationModal(locationId = null) {
+            const modal = document.getElementById('modal-location');
+            const title = document.getElementById('modal-location-title');
+            const form = document.getElementById('form-location');
+
+            form.reset();
+            document.getElementById('location-id').value = '';
+
+            if (locationId) {
+                const location = locations.find(loc => loc.id === locationId);
+                if (location) {
+                    title.textContent = 'Sửa Khu Vực';
+                    document.getElementById('location-id').value = location.id;
+                    document.getElementById('location-name').value = location.name;
+                    document.getElementById('location-description').value = location.description || '';
+                }
+            } else {
+                title.textContent = 'Thêm Khu Vực';
+                document.getElementById('location-id').value = '';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function editLocation(locationId) {
+            openLocationModal(locationId);
+        }
+
+        async function deleteLocation(locationId) {
+            if (!confirm('Bạn có chắc muốn xóa khu vực này?')) {
+                return;
+            }
+
+            try {
+                showLoading();
+                const response = await apiCall('locations', 'POST', {
+                    action: 'delete',
+                    id: locationId
+                });
+
+                if (response.success) {
+                    showToast('success', '✅ Xóa khu vực thành công!');
+                    await loadLocations();
+                    displayKhuVuc();
+                } else {
+                    throw new Error(response.message || 'Lỗi xóa khu vực');
+                }
+            } catch (error) {
+                showToast('error', 'Lỗi: ' + error.message);
+                logError('Delete Location Error', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleSaveLocation(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('location-id').value;
+            const name = document.getElementById('location-name').value;
+            const description = document.getElementById('location-description').value;
+
+            try {
+                showLoading();
+
+                const response = await apiCall('locations', 'POST', {
+                    id: id && id.trim() !== '' ? parseInt(id) : null,
+                    name: name,
+                    description: description,
+                    page: currentPage,
+                });
+
+                if (response.success) {
+                    showToast('success', id ? '✅ Cập nhật thành công!' : '✅ Thêm khu vực thành công!');
+                    closeModal('modal-location');
+                    await loadLocations();
+                    displayKhuVuc();
+                } else {
+                    throw new Error(response.message || 'Lỗi lưu khu vực');
+                }
+            } catch (error) {
+                showToast('error', 'Lỗi: ' + error.message);
+                logError('Save Location Error', error);
             } finally {
                 hideLoading();
             }
@@ -2410,13 +2669,39 @@
                 // Update UI
                 updateTimeRangeDisplay(start, end);
                 updateSummaryCards(dashboardData.summary);
+                updateDashboardBandwidth();
                 updateChart();
                 updateDetailTable(productData);
-                
+
             } catch (error) {
                 console.error('Update Dashboard Error:', error);
                 logError('Update Dashboard', error);
             }
+        }
+
+        function updateDashboardBandwidth() {
+            const container = document.getElementById('dashboard-bandwidth-list');
+            if (!container) return;
+
+            const locations = Object.values(currentBandwidth);
+
+            if (locations.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📡</div><div class="empty-state-text">Chưa có dữ liệu băng thông</div></div>';
+                return;
+            }
+
+            container.innerHTML = locations.map(loc => {
+                return `
+                    <div class="list-item" style="margin-bottom: 10px;">
+                        <div class="list-item-header">
+                            <div class="list-item-title" style="font-size: 15px;">${loc.location}</div>
+                            <div style="font-size: 22px; font-weight: 700; color: var(--primary);">
+                                ${loc.bandwidth} <span style="font-size: 12px; font-weight: 600; opacity: 0.8;">Mbps</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
         
         // Update time range display
@@ -2895,6 +3180,221 @@
             `).join('');
         }
 
+        function displayKhuVuc() {
+            const container = document.getElementById('khuvuc-list');
+            const pageLocations = locations.filter(loc => loc.page === currentPage);
+
+            if (pageLocations.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📍</div><div class="empty-state-text">Chưa có khu vực nào</div></div>';
+                return;
+            }
+
+            container.innerHTML = pageLocations.map(location => `
+                <div class="list-item">
+                    <div class="list-item-header">
+                        <div class="list-item-title">${location.name}</div>
+                        <div class="action-btns">
+                            <button class="btn btn-secondary btn-sm" onclick="editLocation(${location.id})">✏️ Sửa</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteLocation(${location.id})">🗑️ Xóa</button>
+                        </div>
+                    </div>
+                    ${location.description ? `
+                    <div class="list-item-details">
+                        <div class="list-item-detail">
+                            <span>📝</span>
+                            <span>${location.description}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Băng Thông Functions
+        async function loadBandwidthLogs() {
+            try {
+                const response = await apiCall('bandwidth_logs&page=' + currentPage, 'GET');
+                if (response.success) {
+                    bandwidthLogs = response.data || [];
+                    calculateCurrentBandwidth();
+                }
+            } catch (error) {
+                console.error('Load bandwidth error:', error);
+                logError('Load Bandwidth', error);
+            }
+        }
+
+        function calculateCurrentBandwidth() {
+            // Tính băng thông hiện tại của từng khu vực
+            const locationMap = {};
+
+            bandwidthLogs
+                .filter(log => log.page === currentPage)
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .forEach(log => {
+                    if (!locationMap[log.location]) {
+                        locationMap[log.location] = {
+                            location: log.location,
+                            bandwidth: log.bandwidth_after,
+                            lastUpdate: log.timestamp,
+                            lastUser: log.user
+                        };
+                    }
+                });
+
+            currentBandwidth = locationMap;
+        }
+
+        function displayBandwidth() {
+            displayCurrentBandwidth();
+            displayBandwidthHistory();
+        }
+
+        function displayCurrentBandwidth() {
+            const container = document.getElementById('current-bandwidth-list');
+            const locations = Object.values(currentBandwidth);
+
+            if (locations.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📡</div><div class="empty-state-text">Chưa có dữ liệu băng thông</div></div>';
+                return;
+            }
+
+            container.innerHTML = locations.map(loc => {
+                const updateTime = new Date(loc.lastUpdate).toLocaleString('vi-VN');
+                return `
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">${loc.location}</div>
+                            <div style="font-size: 20px; font-weight: 700; color: var(--primary);">
+                                ${loc.bandwidth} <span style="font-size: 14px; font-weight: 500;">Mbps</span>
+                            </div>
+                        </div>
+                        <div class="list-item-details">
+                            <div class="list-item-detail">
+                                <span>⏰</span>
+                                <span>${updateTime}</span>
+                            </div>
+                            <div class="list-item-detail">
+                                <span>👤</span>
+                                <span>${loc.lastUser}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function displayBandwidthHistory() {
+            const container = document.getElementById('bandwidth-history-list');
+            const searchTerm = document.getElementById('search-bandwidth')?.value.toLowerCase() || '';
+
+            let pageLogs = bandwidthLogs.filter(log =>
+                log.page === currentPage &&
+                log.location.toLowerCase().includes(searchTerm)
+            );
+
+            if (pageLogs.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📡</div><div class="empty-state-text">Chưa có lịch sử thay đổi</div></div>';
+                return;
+            }
+
+            // Sắp xếp theo thời gian mới nhất
+            pageLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            container.innerHTML = pageLogs.map(log => {
+                const time = new Date(log.timestamp).toLocaleString('vi-VN');
+                const changeValue = log.bandwidth_change;
+                const changeText = changeValue > 0 ? `+${changeValue}` : `${changeValue}`;
+                const changeColor = changeValue > 0 ? 'var(--success)' : 'var(--danger)';
+                const eventIcon = log.event_type === 'tang' ? '📈' : log.event_type === 'giam' ? '📉' : '📝';
+                const eventText = log.event_type === 'tang' ? 'Tăng' : log.event_type === 'giam' ? 'Giảm' : 'Khác';
+
+                return `
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <div class="list-item-title">${log.location}</div>
+                            <div class="list-item-badge" style="background: ${changeColor};">
+                                ${eventIcon} ${eventText}
+                            </div>
+                        </div>
+                        <div class="list-item-details">
+                            <div class="list-item-detail">
+                                <span>📊</span>
+                                <span>Thay đổi: <strong style="color: ${changeColor};">${changeText} Mbps</strong></span>
+                            </div>
+                            <div class="list-item-detail">
+                                <span>📡</span>
+                                <span>Sau: <strong>${log.bandwidth_after} Mbps</strong></span>
+                            </div>
+                            <div class="list-item-detail">
+                                <span>⏰</span>
+                                <span>${time}</span>
+                            </div>
+                            <div class="list-item-detail">
+                                <span>👤</span>
+                                <span>${log.user}</span>
+                            </div>
+                            ${log.note ? `
+                            <div class="list-item-detail" style="grid-column: 1 / -1;">
+                                <span>📝</span>
+                                <span>${log.note}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function handleBandwidthSubmit(e) {
+            e.preventDefault();
+
+            const location = document.getElementById('bt-location').value.trim();
+            const eventType = document.getElementById('bt-event-type').value;
+            const change = parseFloat(document.getElementById('bt-change').value);
+            const after = parseFloat(document.getElementById('bt-after').value);
+            const note = document.getElementById('bt-note').value.trim();
+
+            if (!location || !eventType || isNaN(change) || isNaN(after)) {
+                showToast('error', 'Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const data = {
+                    page: currentPage,
+                    location: location,
+                    event_type: eventType,
+                    bandwidth_change: change,
+                    bandwidth_after: after,
+                    note: note,
+                    user: currentUser
+                };
+
+                const response = await apiCall('bandwidth_logs', 'POST', data);
+
+                if (response.success) {
+                    showToast('success', 'Cập nhật băng thông thành công!');
+                    document.getElementById('form-bangthong').reset();
+                    await loadBandwidthLogs();
+                    displayBandwidth();
+                } else {
+                    showToast('error', response.message || 'Có lỗi xảy ra!');
+                }
+            } catch (error) {
+                showToast('error', 'Lỗi: ' + error.message);
+                logError('Bandwidth Submit Error', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function filterBandwidth() {
+            displayBandwidthHistory();
+        }
+
         // Filter Functions
         function filterTonKho() {
             const searchTerm = document.getElementById('search-tonkho').value.toLowerCase();
@@ -3200,13 +3700,21 @@
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
             modal.classList.remove('active');
-            
+
             // Reset form khi đóng để clear ID cũ
             if (modalId === 'modal-product') {
                 const form = document.getElementById('form-product');
                 if (form) {
                     form.reset();
                     document.getElementById('product-id').value = ''; // Clear ID
+                }
+            }
+
+            if (modalId === 'modal-location') {
+                const form = document.getElementById('form-location');
+                if (form) {
+                    form.reset();
+                    document.getElementById('location-id').value = ''; // Clear ID
                 }
             }
         }
@@ -3802,7 +4310,10 @@
         let transactions = [];
         let inventory = {};
         let allowedPages = [];
-        
+        let locations = [];
+        let bandwidthLogs = [];
+        let currentBandwidth = {};
+
         // Dashboard State
         let currentTimeFilter = 'week';
         let chartInstance = null;
