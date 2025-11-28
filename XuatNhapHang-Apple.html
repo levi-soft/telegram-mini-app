@@ -2713,7 +2713,8 @@
 
             const options = pageProducts.map(p => {
                 const qty = pageInventory[p.id] || 0;
-                return `<option value="${p.id}">${p.name} (TK: ${qty})</option>`;
+                const stockText = qty > 0 ? `còn: ${qty}` : 'hết hàng';
+                return `<option value="${p.id}">${p.name} (${stockText})</option>`;
             }).join('');
             
             if (nhapSelect) nhapSelect.innerHTML = '<option value="">-- Chọn sản phẩm --</option>' + options;
@@ -3553,6 +3554,7 @@
         function renderBulkNhapList() {
             const container = document.getElementById('bulk-nhap-list');
             const pageProducts = products.filter(p => p.page === currentPage);
+            const pageInventory = inventory[currentPage] || {};
             
             if (bulkNhapItems.length === 0) {
                 container.innerHTML = '<div class="empty-state" style="padding: 20px;"><div class="empty-state-text" style="font-size: 14px;">Chưa có sản phẩm nào. Click "Thêm Sản Phẩm" để bắt đầu.</div></div>';
@@ -3562,9 +3564,13 @@
             
             container.innerHTML = bulkNhapItems.map(item => `
                 <div class="bulk-item">
-                    <select class="form-control" onchange="updateBulkNhapItem(${item.id}, 'product_id', this.value)" style="font-size: 14px; padding: 8px 12px; min-height: 36px;">
+                    <select class="form-control" onchange="updateBulkNhapItem(${item.id}, 'product_id', this.value)">
                         <option value="">-- Chọn sản phẩm --</option>
-                        ${pageProducts.map(p => `<option value="${p.id}" ${item.product_id === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                        ${pageProducts.map(p => {
+                            const qty = pageInventory[p.id] || 0;
+                            const stockText = qty > 0 ? `còn: ${qty}` : 'hết hàng';
+                            return `<option value="${p.id}" ${item.product_id === p.id ? 'selected' : ''}>${p.name} (${stockText})</option>`;
+                        }).join('')}
                     </select>
                     <div class="bulk-item-quantity">
                         <span style="font-size: 13px; color: var(--text-secondary);">SL:</span>
@@ -3592,11 +3598,12 @@
                 const currentInv = item.product_id ? (pageInventory[item.product_id] || 0) : 0;
                 return `
                     <div class="bulk-item">
-                        <select class="form-control" onchange="updateBulkXuatItem(${item.id}, 'product_id', this.value)" style="font-size: 14px; padding: 8px 12px; min-height: 36px;">
+                        <select class="form-control" onchange="updateBulkXuatItem(${item.id}, 'product_id', this.value)">
                             <option value="">-- Chọn sản phẩm --</option>
                             ${pageProducts.map(p => {
                                 const inv = pageInventory[p.id] || 0;
-                                return `<option value="${p.id}" ${item.product_id === p.id ? 'selected' : ''}>${p.name} (TK: ${inv})</option>`;
+                                const stockText = inv > 0 ? `còn: ${inv}` : 'hết hàng';
+                                return `<option value="${p.id}" ${item.product_id === p.id ? 'selected' : ''}>${p.name} (${stockText})</option>`;
                             }).join('')}
                         </select>
                         <div class="bulk-item-quantity">
