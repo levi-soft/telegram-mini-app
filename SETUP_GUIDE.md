@@ -651,10 +651,16 @@ Click **Create Table** → Tên: `bandwidth_logs`
 **Columns:**
 - `page` - Text - Required (RR88 | XX88 | MM88)
 - `location` - Text - Required (Tên khu vực: VD "Văn phòng tầng 8", "KTX tầng 7")
-- `event_type` - Text - Required ("moi" | "tang" | "giam")
+- `network_type` - Text - Required ("doanh_nghiep" | "gia_dinh")
+  - "doanh_nghiep" = Mạng doanh nghiệp (dùng cho văn phòng)
+  - "gia_dinh" = Mạng gia đình (dùng cho ký túc xá)
+- `provider` - Text - Required ("viettel" | "vnpt" | "fpt" | "mobifone" | "cmcti" | "spt" | "other")
+  - Nhà cung cấp dịch vụ internet
+- `event_type` - Text - Required ("moi" | "tang" | "giam" | "chuyen")
   - "moi" = Lắp đặt mạng mới
   - "tang" = Tăng băng thông
   - "giam" = Giảm băng thông
+  - "chuyen" = Chuyển đổi nhà cung cấp
 - `bandwidth_change` - Number - Required (Số thay đổi: +100, -50, etc.)
 - `bandwidth_after` - Number - Required (Băng thông sau khi thay đổi - TỰ ĐỘNG TÍNH)
 - `note` - Text - Optional (Ghi chú chi tiết)
@@ -663,9 +669,10 @@ Click **Create Table** → Tên: `bandwidth_logs`
 
 **Sample data:**
 ```
-RR88 | Văn phòng tầng 8 | moi  | 750  | 750  | Lắp mạng VNPT gói 750Mbps          | Admin | 2025-11-28
-RR88 | Văn phòng tầng 8 | tang | 100  | 850  | Nâng cấp từ 750Mbps lên 850Mbps    | Admin | 2025-11-29
-XX88 | KTX tầng 7       | giam | -10  | 60   | Giảm do hết hợp đồng dịch vụ cũ   | Staff | 2025-11-27
+RR88 | Văn phòng tầng 8 | doanh_nghiep | vnpt    | moi    | 750  | 750  | Lắp mạng VNPT gói doanh nghiệp 750Mbps | Admin | 2025-11-28
+RR88 | Văn phòng tầng 8 | doanh_nghiep | vnpt    | tang   | 100  | 850  | Nâng cấp từ 750Mbps lên 850Mbps        | Admin | 2025-11-29
+XX88 | KTX tầng 7       | gia_dinh     | viettel | giam   | -10  | 60   | Giảm do hết hợp đồng dịch vụ cũ       | Staff | 2025-11-27
+RR88 | Phòng server     | doanh_nghiep | fpt     | chuyen | 250  | 1000 | Chuyển từ VNPT sang FPT, tăng 750→1000 | Admin | 2025-11-28
 ```
 
 ---
@@ -699,6 +706,8 @@ const logs = $input.all().map(item => {
     id: log.id,
     page: log.page,
     location: log.location,
+    network_type: log.network_type,
+    provider: log.provider,
     event_type: log.event_type,
     bandwidth_change: log.bandwidth_change,
     bandwidth_after: log.bandwidth_after,
@@ -742,7 +751,7 @@ Thêm **Rule mới** vào Switch node (sau rules hiện tại):
 const body = $input.first().json.body;
 
 // Validate required fields
-if (!body.location || !body.event_type || !body.bandwidth_change || !body.bandwidth_after) {
+if (!body.location || !body.network_type || !body.provider || !body.event_type || !body.bandwidth_change || !body.bandwidth_after) {
   return [{
     json: {
       success: false,
@@ -751,13 +760,35 @@ if (!body.location || !body.event_type || !body.bandwidth_change || !body.bandwi
   }];
 }
 
+// Validate network_type
+const validNetworkTypes = ['doanh_nghiep', 'gia_dinh'];
+if (!validNetworkTypes.includes(body.network_type)) {
+  return [{
+    json: {
+      success: false,
+      message: 'Loại mạng không hợp lệ (phải là: doanh_nghiep hoặc gia_dinh)'
+    }
+  }];
+}
+
+// Validate provider
+const validProviders = ['viettel', 'vnpt', 'fpt', 'mobifone', 'cmcti', 'spt', 'other'];
+if (!validProviders.includes(body.provider)) {
+  return [{
+    json: {
+      success: false,
+      message: 'Nhà cung cấp không hợp lệ'
+    }
+  }];
+}
+
 // Validate event_type
-const validTypes = ['moi', 'tang', 'giam'];
+const validTypes = ['moi', 'tang', 'giam', 'chuyen'];
 if (!validTypes.includes(body.event_type)) {
   return [{
     json: {
       success: false,
-      message: 'Loại sự kiện không hợp lệ (phải là: moi, tang, hoặc giam)'
+      message: 'Loại sự kiện không hợp lệ (phải là: moi, tang, giam, hoặc chuyen)'
     }
   }];
 }
@@ -766,6 +797,8 @@ return [{
   json: {
     page: body.page,
     location: body.location,
+    network_type: body.network_type,
+    provider: body.provider,
     event_type: body.event_type,
     bandwidth_change: parseFloat(body.bandwidth_change),
     bandwidth_after: parseFloat(body.bandwidth_after),
@@ -782,6 +815,8 @@ return [{
 - Fields:
   - page: `{{ $json.page }}`
   - location: `{{ $json.location }}`
+  - network_type: `{{ $json.network_type }}`
+  - provider: `{{ $json.provider }}`
   - event_type: `{{ $json.event_type }}`
   - bandwidth_change: `{{ $json.bandwidth_change }}`
   - bandwidth_after: `{{ $json.bandwidth_after }}`
@@ -823,10 +858,12 @@ GET https://your-n8n.app/webhook/api?endpoint=bandwidth_logs&page=RR88&user_id=1
       "id": 1,
       "page": "RR88",
       "location": "Văn phòng tầng 8",
+      "network_type": "doanh_nghiep",
+      "provider": "vnpt",
       "event_type": "tang",
       "bandwidth_change": 100,
       "bandwidth_after": 750,
-      "note": "Nâng cấp gói cước",
+      "note": "Nâng cấp gói cước doanh nghiệp",
       "user": "Admin",
       "timestamp": "2025-11-28T10:30:00Z"
     }
@@ -843,10 +880,12 @@ Body (JSON):
 {
   "page": "RR88",
   "location": "Văn phòng tầng 8",
+  "network_type": "doanh_nghiep",
+  "provider": "vnpt",
   "event_type": "tang",
   "bandwidth_change": 100,
   "bandwidth_after": 750,
-  "note": "Nâng cấp gói cước",
+  "note": "Nâng cấp gói cước doanh nghiệp",
   "user": "Admin"
 }
 ```

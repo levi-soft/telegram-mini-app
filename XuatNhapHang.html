@@ -1710,6 +1710,29 @@
                                 <option value="moi">🆕 Lắp Đặt Mới</option>
                                 <option value="tang">📈 Tăng Băng Thông</option>
                                 <option value="giam">📉 Giảm Băng Thông</option>
+                                <option value="chuyen">🔄 Đổi Nhà Cung Cấp</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="bt-network-type-group">
+                            <label class="form-label">Loại Mạng</label>
+                            <select class="form-control" id="bt-network-type">
+                                <option value="">-- Chọn loại mạng --</option>
+                                <option value="doanh_nghiep">🏢 Doanh Nghiệp</option>
+                                <option value="gia_dinh">🏠 Gia Đình</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="bt-provider-group">
+                            <label class="form-label">Nhà Cung Cấp</label>
+                            <select class="form-control" id="bt-provider">
+                                <option value="">-- Chọn nhà cung cấp --</option>
+                                <option value="ezecom">EZECOM</option>
+                                <option value="today">Today</option>
+                                <option value="sinet">SINet</option>
+                                <option value="mekong">MekongNet</option>
+                                <option value="telnet">TelNet</option>
+                                <option value="online">Online</option>
+                                <option value="metfone">Metfone</option>
+                                <option value="other">Khác</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -2118,7 +2141,10 @@
 
             const btEventType = document.getElementById('bt-event-type');
             if (btEventType) {
-                btEventType.addEventListener('change', calculateBandwidthAfter);
+                btEventType.addEventListener('change', () => {
+                    handleEventTypeChange();
+                    calculateBandwidthAfter();
+                });
             }
 
             // Setup modal listeners
@@ -2167,7 +2193,10 @@
                     displayBandwidth();
                     updateLocationDropdown();
                     // Trigger update sau khi dropdown đã có data
-                    setTimeout(() => updateCurrentBandwidth(), 100);
+                    setTimeout(() => {
+                        updateCurrentBandwidth();
+                        handleEventTypeChange(); // Set initial form state
+                    }, 100);
                     break;
             }
         }
@@ -2376,6 +2405,40 @@
             updateCurrentBandwidth();
         }
 
+        function handleEventTypeChange() {
+            const eventType = document.getElementById('bt-event-type')?.value;
+            const networkTypeGroup = document.getElementById('bt-network-type-group');
+            const providerGroup = document.getElementById('bt-provider-group');
+            const networkTypeSelect = document.getElementById('bt-network-type');
+            const providerSelect = document.getElementById('bt-provider');
+            const locationSelect = document.getElementById('bt-location');
+
+            if (!eventType) return;
+
+            // Lắp mới hoặc Chuyển NCC: Hiện 2 dropdowns, bắt buộc nhập
+            if (eventType === 'moi' || eventType === 'chuyen') {
+                if (networkTypeGroup) networkTypeGroup.style.display = '';
+                if (providerGroup) providerGroup.style.display = '';
+                if (networkTypeSelect) networkTypeSelect.setAttribute('required', 'required');
+                if (providerSelect) providerSelect.setAttribute('required', 'required');
+            }
+            // Tăng hoặc Giảm: Ẩn 2 dropdowns, tự động lấy từ record hiện tại
+            else if (eventType === 'tang' || eventType === 'giam') {
+                if (networkTypeGroup) networkTypeGroup.style.display = 'none';
+                if (providerGroup) providerGroup.style.display = 'none';
+                if (networkTypeSelect) networkTypeSelect.removeAttribute('required');
+                if (providerSelect) providerSelect.removeAttribute('required');
+
+                // Auto-fill từ record hiện tại
+                const selectedLocation = locationSelect?.value;
+                if (selectedLocation && currentBandwidth[selectedLocation]) {
+                    const locationData = currentBandwidth[selectedLocation];
+                    if (networkTypeSelect) networkTypeSelect.value = locationData.network_type || '';
+                    if (providerSelect) providerSelect.value = locationData.provider || '';
+                }
+            }
+        }
+
         function updateCurrentBandwidth() {
             const locationSelect = document.getElementById('bt-location');
             const currentInput = document.getElementById('bt-current');
@@ -2396,6 +2459,9 @@
             const currentBW = locationData ? locationData.bandwidth : 0;
 
             currentInput.value = currentBW;
+
+            // Auto-fill network_type và provider nếu event = tang/giam
+            handleEventTypeChange();
 
             // Trigger calculation
             calculateBandwidthAfter();
@@ -2424,6 +2490,9 @@
             } else if (eventType === 'giam') {
                 // Giảm: luôn là âm
                 actualChange = -Math.abs(changeValue);
+            } else if (eventType === 'chuyen') {
+                // Chuyển nhà cung cấp: có thể tăng, giảm, hoặc giữ nguyên
+                actualChange = changeValue;
             }
 
             // Tính băng thông sau
@@ -2432,7 +2501,7 @@
                 // Lắp mới: băng thông sau = giá trị mới
                 result = actualChange;
             } else {
-                // Tăng/Giảm: băng thông sau = hiện tại + thay đổi
+                // Tăng/Giảm/Chuyển: băng thông sau = hiện tại + thay đổi
                 result = current + actualChange;
             }
 
@@ -2799,25 +2868,105 @@
                 return;
             }
 
-            // Sort by bandwidth (highest first)
-            locations.sort((a, b) => b.bandwidth - a.bandwidth);
+            // Group by network_type (same as tab display)
+            const groupedByType = {
+                'doanh_nghiep': [],
+                'gia_dinh': [],
+                'other': []
+            };
 
-            container.innerHTML = locations.map(loc => {
-                const updateDate = loc.lastUpdate ? new Date(loc.lastUpdate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '';
-                return `
-                    <div class="list-item" style="margin-bottom: 8px; padding: 8px 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-size: 13px; font-weight: 600; margin-bottom: 2px;">${loc.location}</div>
-                                ${updateDate ? `<div style="font-size: 10px; color: var(--text-tertiary);">Cập nhật: ${updateDate}</div>` : ''}
-                            </div>
-                            <div style="font-size: 16px; font-weight: 700; color: var(--primary);">
-                                ${loc.bandwidth}<span style="font-size: 10px; font-weight: 500; opacity: 0.7; margin-left: 2px;">Mbps</span>
-                            </div>
+            locations.forEach(loc => {
+                const type = loc.network_type;
+                if (type === 'doanh_nghiep') {
+                    groupedByType.doanh_nghiep.push(loc);
+                } else if (type === 'gia_dinh') {
+                    groupedByType.gia_dinh.push(loc);
+                } else {
+                    groupedByType.other.push(loc);
+                }
+            });
+
+            // Sort each group by bandwidth (highest to lowest)
+            groupedByType.doanh_nghiep.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0));
+            groupedByType.gia_dinh.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0));
+            groupedByType.other.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0));
+
+            let html = '';
+
+            // Render Doanh Nghiep section
+            if (groupedByType.doanh_nghiep.length > 0) {
+                html += `
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); padding: 8px 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <span>🏢</span>
+                            <span>Mạng Doanh Nghiệp</span>
                         </div>
+                        ${groupedByType.doanh_nghiep.map(loc => renderDashboardBandwidthItem(loc)).join('')}
                     </div>
                 `;
-            }).join('');
+            }
+
+            // Render Gia Dinh section
+            if (groupedByType.gia_dinh.length > 0) {
+                html += `
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); padding: 8px 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <span>🏠</span>
+                            <span>Mạng Gia Đình</span>
+                        </div>
+                        ${groupedByType.gia_dinh.map(loc => renderDashboardBandwidthItem(loc)).join('')}
+                    </div>
+                `;
+            }
+
+            // Render Other section (fallback)
+            if (groupedByType.other.length > 0) {
+                html += `
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); padding: 8px 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <span>🌐</span>
+                            <span>Khác</span>
+                        </div>
+                        ${groupedByType.other.map(loc => renderDashboardBandwidthItem(loc)).join('')}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderDashboardBandwidthItem(loc) {
+            const updateDate = loc.lastUpdate ? new Date(loc.lastUpdate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '';
+
+            // Format provider
+            const providerMap = {
+                'ezecom': 'EZECOM',
+                'today': 'Today',
+                'sinet': 'SINET',
+                'mekong': 'MekongNet',
+                'telnet': 'TelNet',
+                'online': 'Online',
+                'metfone': 'Metfone',
+                'other': 'Khác'
+            };
+            const providerText = providerMap[loc.provider] || loc.provider || 'N/A';
+
+            return `
+                <div class="list-item" style="padding: 8px 12px; margin-bottom: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
+                            <div style="font-size: 13px; font-weight: 600;">${loc.location}</div>
+                            ${updateDate ? `<div style="font-size: 10px; color: var(--text-tertiary);">Cập nhật: ${updateDate}</div>` : ''}
+                        </div>
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 0 12px;">
+                            ${providerText}
+                        </div>
+                        <div style="font-size: 16px; font-weight: 700; color: var(--primary); white-space: nowrap;">
+                            ${loc.bandwidth}<span style="font-size: 11px; font-weight: 500; opacity: 0.7; margin-left: 2px;">Mbps</span>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         
         // Update time range display
@@ -3368,6 +3517,8 @@
                         locationMap[log.location] = {
                             location: log.location,
                             bandwidth: log.bandwidth_after,
+                            network_type: log.network_type,
+                            provider: log.provider,
                             lastUpdate: log.timestamp,
                             lastUser: log.user
                         };
@@ -3391,33 +3542,71 @@
                 return;
             }
 
-            container.innerHTML = locations.map(loc => {
-                const updateDate = loc.lastUpdate ? new Date(loc.lastUpdate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '';
-                const updateTime = new Date(loc.lastUpdate).toLocaleString('vi-VN');
-                return `
-                    <div class="list-item" style="padding: 8px 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <div>
-                                <div style="font-size: 13px; font-weight: 600; margin-bottom: 2px;">${loc.location}</div>
-                                ${updateDate ? `<div style="font-size: 10px; color: var(--text-tertiary);">Cập nhật: ${updateDate}</div>` : ''}
-                            </div>
-                            <div style="font-size: 16px; font-weight: 700; color: var(--primary);">
-                                ${loc.bandwidth}<span style="font-size: 10px; font-weight: 500; opacity: 0.7; margin-left: 2px;">Mbps</span>
-                            </div>
+            // Group by network_type
+            const groupedByType = {
+                'doanh_nghiep': [],
+                'gia_dinh': [],
+                'other': []
+            };
+
+            locations.forEach(loc => {
+                const type = loc.network_type;
+                if (type === 'doanh_nghiep') {
+                    groupedByType.doanh_nghiep.push(loc);
+                } else if (type === 'gia_dinh') {
+                    groupedByType.gia_dinh.push(loc);
+                } else {
+                    groupedByType.other.push(loc);
+                }
+            });
+
+            // Sort each group by bandwidth (highest to lowest)
+            groupedByType.doanh_nghiep.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0));
+            groupedByType.gia_dinh.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0));
+            groupedByType.other.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0));
+
+            let html = '';
+
+            // Render Doanh Nghiep section
+            if (groupedByType.doanh_nghiep.length > 0) {
+                html += `
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); padding: 8px 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <span>🏢</span>
+                            <span>Mạng Doanh Nghiệp</span>
                         </div>
-                        <div class="list-item-details">
-                            <div class="list-item-detail" style="font-size: 11px;">
-                                <span>⏰</span>
-                                <span>${updateTime}</span>
-                            </div>
-                            <div class="list-item-detail" style="font-size: 11px;">
-                                <span>👤</span>
-                                <span>${loc.lastUser}</span>
-                            </div>
-                        </div>
+                        ${groupedByType.doanh_nghiep.map(loc => renderDashboardBandwidthItem(loc)).join('')}
                     </div>
                 `;
-            }).join('');
+            }
+
+            // Render Gia Dinh section
+            if (groupedByType.gia_dinh.length > 0) {
+                html += `
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); padding: 8px 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <span>🏠</span>
+                            <span>Mạng Gia Đình</span>
+                        </div>
+                        ${groupedByType.gia_dinh.map(loc => renderDashboardBandwidthItem(loc)).join('')}
+                    </div>
+                `;
+            }
+
+            // Render Other section (fallback)
+            if (groupedByType.other.length > 0) {
+                html += `
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); padding: 8px 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <span>🌐</span>
+                            <span>Khác</span>
+                        </div>
+                        ${groupedByType.other.map(loc => renderDashboardBandwidthItem(loc)).join('')}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
         }
 
         function displayBandwidthHistory() {
@@ -3453,10 +3642,39 @@
                 } else if (log.event_type === 'giam') {
                     eventIcon = '📉';
                     eventText = 'Giảm';
+                } else if (log.event_type === 'chuyen') {
+                    eventIcon = '🔄';
+                    eventText = 'Đổi NCC';
                 } else {
                     eventIcon = '📝';
                     eventText = 'Khác';
                 }
+
+                // Format network type
+                let networkTypeIcon, networkTypeText;
+                if (log.network_type === 'doanh_nghiep') {
+                    networkTypeIcon = '🏢';
+                    networkTypeText = 'Doanh Nghiệp';
+                } else if (log.network_type === 'gia_dinh') {
+                    networkTypeIcon = '🏠';
+                    networkTypeText = 'Gia Đình';
+                } else {
+                    networkTypeIcon = '🌐';
+                    networkTypeText = log.network_type || 'N/A';
+                }
+
+                // Format provider
+                const providerMap = {
+                    'ezecom': 'EZECOM',
+                    'today': 'Today',
+                    'sinet': 'SINET',
+                    'mekong': 'MekongNet',
+                    'telnet': 'TelNet',
+                    'online': 'Online',
+                    'metfone': 'Metfone',
+                    'other': 'Khác'
+                };
+                const providerText = providerMap[log.provider] || log.provider || 'N/A';
 
                 return `
                     <div class="list-item">
@@ -3467,6 +3685,14 @@
                             </div>
                         </div>
                         <div class="list-item-details">
+                            <div class="list-item-detail">
+                                <span>${networkTypeIcon}</span>
+                                <span>${networkTypeText}</span>
+                            </div>
+                            <div class="list-item-detail">
+                                <span>📶</span>
+                                <span>${providerText}</span>
+                            </div>
                             <div class="list-item-detail">
                                 <span>📊</span>
                                 <span>Thay đổi: <strong style="color: ${changeColor};">${changeText} Mbps</strong></span>
@@ -3499,13 +3725,22 @@
             e.preventDefault();
 
             const location = document.getElementById('bt-location').value.trim();
+            const networkType = document.getElementById('bt-network-type').value;
+            const provider = document.getElementById('bt-provider').value;
             const eventType = document.getElementById('bt-event-type').value;
             const changeValue = parseFloat(document.getElementById('bt-change').value);
             const after = parseFloat(document.getElementById('bt-after').value);
             const note = document.getElementById('bt-note').value.trim();
 
+            // Basic validation
             if (!location || !eventType || isNaN(changeValue) || isNaN(after)) {
                 showToast('error', 'Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
+
+            // Validate network_type and provider only for 'moi' and 'chuyen' events
+            if ((eventType === 'moi' || eventType === 'chuyen') && (!networkType || !provider)) {
+                showToast('error', 'Vui lòng chọn loại mạng và nhà cung cấp!');
                 return;
             }
 
@@ -3517,6 +3752,9 @@
                 actualChange = Math.abs(changeValue);
             } else if (eventType === 'giam') {
                 actualChange = -Math.abs(changeValue);
+            } else if (eventType === 'chuyen') {
+                // Chuyển nhà cung cấp: có thể tăng, giảm, hoặc giữ nguyên
+                actualChange = changeValue;
             }
 
             showLoading();
@@ -3525,6 +3763,8 @@
                 const data = {
                     page: currentPage,
                     location: location,
+                    network_type: networkType,
+                    provider: provider,
                     event_type: eventType,
                     bandwidth_change: actualChange, // Lưu với dấu đúng
                     bandwidth_after: after,
