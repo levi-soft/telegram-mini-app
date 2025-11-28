@@ -64,7 +64,7 @@
             --space-md: 18px;
             --space-lg: 24px;
             --space-xl: 32px;
-            
+
             /* 🔤 Typography */
             --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
             --border-radius: 10px;
@@ -173,16 +173,16 @@
 
         .page-btn {
             flex: 1;
-            padding: 8px;
+            padding: 12px 10px;
             border: 1px solid transparent;
             background: transparent;
             color: var(--text-tertiary);
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            min-height: 36px;
+            min-height: 44px;
         }
 
         .page-btn.active {
@@ -206,7 +206,7 @@
         }
 
         .nav-btn {
-            padding: 10px;
+            padding: 14px 12px;
             border: none;
             background: var(--bg-tertiary);
             border-radius: var(--border-radius);
@@ -215,8 +215,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
-            min-height: 68px;
+            gap: 6px;
+            min-height: 78px;
         }
 
         .nav-btn:active {
@@ -231,12 +231,12 @@
         }
 
         .nav-btn-icon {
-            font-size: 24px;
+            font-size: 28px;
             line-height: 1;
         }
 
         .nav-btn-text {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
             opacity: 0.9;
         }
@@ -753,8 +753,16 @@
         /* ============================================
            📊 TABLE - iOS Style
            ============================================ */
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: var(--border-radius);
+        }
+
         .inventory-table {
             width: 100%;
+            min-width: 320px;
             border-collapse: separate;
             border-spacing: 0;
             background: var(--bg-secondary);
@@ -767,17 +775,18 @@
         .inventory-table th {
             background: var(--bg-tertiary);
             color: var(--text-primary);
-            padding: 14px 12px;
+            padding: 8px 6px;
             text-align: left;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             border-bottom: 1px solid var(--separator);
+            white-space: nowrap;
         }
 
         .inventory-table td {
-            padding: 14px 12px;
+            padding: 8px 6px;
             border-bottom: 1px solid var(--separator);
-            font-size: 15px;
+            font-size: 13px;
         }
 
         .inventory-table tr:last-child td {
@@ -795,7 +804,7 @@
         }
 
         .time-filter-btn {
-            padding: 8px 6px;
+            padding: 12px 8px;
             border: 1px solid var(--separator);
             background: var(--bg-secondary);
             border-radius: 8px;
@@ -804,8 +813,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
-            min-height: 50px;
+            gap: 4px;
+            min-height: 62px;
             position: relative;
             overflow: hidden;
         }
@@ -835,11 +844,11 @@
         }
 
         .filter-icon {
-            font-size: 18px;
+            font-size: 20px;
         }
 
         .filter-label {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
         }
 
@@ -862,22 +871,22 @@
             border: 1px solid var(--border);
         }
 
-        /* Summary Cards */
+        /* Summary Cards - ULTRA COMPACT */
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
+            gap: 4px;
         }
 
         .summary-card {
             background: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            padding: 10px 6px;
+            border-radius: 6px;
+            padding: 5px 2px;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 4px;
+            gap: 1px;
             box-shadow: var(--shadow-card);
             border: 1px solid var(--border);
             border-top: 2px solid var(--primary);
@@ -905,28 +914,28 @@
         }
 
         .summary-icon {
-            font-size: 22px;
+            font-size: 14px;
         }
 
         .summary-label {
-            font-size: 10px;
+            font-size: 9px;
             color: var(--text-secondary);
             font-weight: 500;
         }
 
         .summary-value {
-            font-size: 18px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--text-primary);
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
         }
 
         .summary-trend {
-            font-size: 10px;
+            font-size: 8px;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 3px;
+            gap: 2px;
         }
 
         .summary-trend.up {
@@ -959,13 +968,13 @@
         }
 
         .chart-toggle-btn {
-            padding: 8px 14px;
+            padding: 10px 16px;
             border: none;
             background: transparent;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
             color: var(--text-secondary);
         }
@@ -978,12 +987,13 @@
 
         .chart-canvas-wrapper {
             position: relative;
-            height: 300px;
+            height: 380px;
             margin-bottom: var(--space-sm);
         }
 
         .detail-table {
             width: 100%;
+            min-width: 320px;
             border-collapse: separate;
             border-spacing: 0;
             background: var(--bg-secondary);
@@ -995,17 +1005,18 @@
         .detail-table th {
             background: var(--bg-tertiary);
             color: var(--text-primary);
-            padding: 12px;
+            padding: 8px 6px;
             text-align: left;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             border-bottom: 1px solid var(--separator);
+            white-space: nowrap;
         }
 
         .detail-table td {
-            padding: 12px;
+            padding: 8px 6px;
             border-bottom: 1px solid var(--separator);
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .detail-table tr:last-child td {
@@ -1258,16 +1269,16 @@
             }
             
             .nav-btn {
-                min-height: 60px;
-                padding: 6px 4px;
+                min-height: 78px;
+                padding: 12px 8px;
             }
 
             .nav-btn-icon {
-                font-size: 20px;
+                font-size: 26px;
             }
 
             .nav-btn-text {
-                font-size: 9px;
+                font-size: 11px;
             }
             
             .content {
@@ -1285,13 +1296,13 @@
             .summary-card {
                 padding: 12px 10px;
             }
-            
+
             .summary-value {
-                font-size: 22px;
+                font-size: 16px;
             }
             
             .chart-canvas-wrapper {
-                height: 250px;
+                height: 320px;
             }
         }
         
@@ -1300,11 +1311,11 @@
             .container {
                 max-width: 768px;
             }
-            
+
             .nav {
-                grid-template-columns: repeat(6, 1fr);
+                grid-template-columns: repeat(4, 1fr);
             }
-            
+
             .stats-grid {
                 grid-template-columns: repeat(4, 1fr);
             }
@@ -1691,9 +1702,6 @@
                             <select class="form-control" id="bt-location" required>
                                 <option value="">-- Chọn khu vực --</option>
                             </select>
-                            <small style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px; display: block;">
-                                Chưa có khu vực? <a href="#" onclick="switchSection('khuvuc'); return false;" style="color: var(--primary);">Thêm khu vực mới</a>
-                            </small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Loại Sự Kiện</label>
@@ -1707,23 +1715,14 @@
                         <div class="form-group">
                             <label class="form-label">Băng Thông Hiện Tại (Mbps)</label>
                             <input type="number" class="form-control" id="bt-current" value="0" min="0" step="0.1" readonly style="background: var(--bg-tertiary); opacity: 0.7;">
-                            <small style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px; display: block;">
-                                Băng thông hiện tại của khu vực đã chọn
-                            </small>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Thay Đổi (Mbps)</label>
-                            <input type="number" class="form-control" id="bt-change" placeholder="VD: +100 hoặc -50" step="0.1" required>
-                            <small style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px; display: block;">
-                                Nhập số dương để tăng (+), số âm để giảm (-)
-                            </small>
+                            <label class="form-label">Giá Trị Thay Đổi (Mbps)</label>
+                            <input type="number" class="form-control" id="bt-change" placeholder="VD: 100" min="0" step="0.1" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Băng Thông Sau Thay Đổi (Mbps)</label>
                             <input type="number" class="form-control" id="bt-after" value="0" min="0" step="0.1" readonly style="background: var(--bg-tertiary); font-weight: 600; font-size: 16px;">
-                            <small style="color: var(--success); font-size: 12px; margin-top: 4px; display: block;">
-                                ✓ Tự động tính toán = Hiện tại + Thay đổi
-                            </small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Ghi Chú</label>
@@ -2167,6 +2166,8 @@
                 case 'bangthong':
                     displayBandwidth();
                     updateLocationDropdown();
+                    // Trigger update sau khi dropdown đã có data
+                    setTimeout(() => updateCurrentBandwidth(), 100);
                     break;
             }
         }
@@ -2356,6 +2357,8 @@
             if (!dropdown) return;
 
             const pageLocations = locations.filter(loc => loc.page === currentPage);
+            const currentValue = dropdown.value; // Lưu giá trị đang chọn
+
             dropdown.innerHTML = '<option value="">-- Chọn khu vực --</option>';
             pageLocations.forEach(loc => {
                 const option = document.createElement('option');
@@ -2363,14 +2366,23 @@
                 option.textContent = loc.name;
                 dropdown.appendChild(option);
             });
+
+            // Khôi phục giá trị đã chọn (nếu có)
+            if (currentValue && pageLocations.some(loc => loc.name === currentValue)) {
+                dropdown.value = currentValue;
+            }
+
+            // Trigger update bandwidth sau khi dropdown ready
+            updateCurrentBandwidth();
         }
 
         function updateCurrentBandwidth() {
             const locationSelect = document.getElementById('bt-location');
             const currentInput = document.getElementById('bt-current');
-            const changeInput = document.getElementById('bt-change');
 
-            if (!locationSelect || !currentInput) return;
+            if (!locationSelect || !currentInput) {
+                return;
+            }
 
             const selectedLocation = locationSelect.value;
             if (!selectedLocation) {
@@ -2382,6 +2394,7 @@
             // Get current bandwidth from currentBandwidth object
             const locationData = currentBandwidth[selectedLocation];
             const currentBW = locationData ? locationData.bandwidth : 0;
+
             currentInput.value = currentBW;
 
             // Trigger calculation
@@ -2397,16 +2410,30 @@
             if (!currentInput || !changeInput || !afterInput || !eventTypeSelect) return;
 
             const current = parseFloat(currentInput.value) || 0;
-            const change = parseFloat(changeInput.value) || 0;
+            const changeValue = parseFloat(changeInput.value) || 0;
             const eventType = eventTypeSelect.value;
 
+            // Tự động thêm dấu +/- dựa vào event type
+            let actualChange = 0;
+            if (eventType === 'moi') {
+                // Lắp mới: giá trị nhập = băng thông mới
+                actualChange = Math.abs(changeValue);
+            } else if (eventType === 'tang') {
+                // Tăng: luôn là dương
+                actualChange = Math.abs(changeValue);
+            } else if (eventType === 'giam') {
+                // Giảm: luôn là âm
+                actualChange = -Math.abs(changeValue);
+            }
+
+            // Tính băng thông sau
             let result = 0;
             if (eventType === 'moi') {
-                // Lắp mới: băng thông sau = số thay đổi (bỏ qua hiện tại)
-                result = Math.abs(change);
+                // Lắp mới: băng thông sau = giá trị mới
+                result = actualChange;
             } else {
                 // Tăng/Giảm: băng thông sau = hiện tại + thay đổi
-                result = current + change;
+                result = current + actualChange;
             }
 
             afterInput.value = Math.max(0, result); // Không cho âm
@@ -2772,13 +2799,20 @@
                 return;
             }
 
+            // Sort by bandwidth (highest first)
+            locations.sort((a, b) => b.bandwidth - a.bandwidth);
+
             container.innerHTML = locations.map(loc => {
+                const updateDate = loc.lastUpdate ? new Date(loc.lastUpdate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '';
                 return `
-                    <div class="list-item" style="margin-bottom: 10px;">
-                        <div class="list-item-header">
-                            <div class="list-item-title" style="font-size: 15px;">${loc.location}</div>
-                            <div style="font-size: 22px; font-weight: 700; color: var(--primary);">
-                                ${loc.bandwidth} <span style="font-size: 12px; font-weight: 600; opacity: 0.8;">Mbps</span>
+                    <div class="list-item" style="margin-bottom: 8px; padding: 8px 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 600; margin-bottom: 2px;">${loc.location}</div>
+                                ${updateDate ? `<div style="font-size: 10px; color: var(--text-tertiary);">Cập nhật: ${updateDate}</div>` : ''}
+                            </div>
+                            <div style="font-size: 16px; font-weight: 700; color: var(--primary);">
+                                ${loc.bandwidth}<span style="font-size: 10px; font-weight: 500; opacity: 0.7; margin-left: 2px;">Mbps</span>
                             </div>
                         </div>
                     </div>
@@ -2856,18 +2890,24 @@
         function renderBarChart(productData) {
             const canvas = document.getElementById('main-chart');
             if (!canvas) return;
-            
+
             const ctx = canvas.getContext('2d');
-            
+
             // Destroy existing chart
             if (chartInstance) {
                 chartInstance.destroy();
             }
-            
+
+            // Limit to top 10 products by total activity (nhap + xuat)
+            const topProducts = productData
+                .map(p => ({...p, total: Math.abs(p.nhap) + Math.abs(p.xuat)}))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 10);
+
             // Prepare data
-            const labels = productData.map(p => p.name);
-            const nhapData = productData.map(p => p.nhap);
-            const xuatData = productData.map(p => p.xuat);
+            const labels = topProducts.map(p => p.name);
+            const nhapData = topProducts.map(p => p.nhap);
+            const xuatData = topProducts.map(p => p.xuat);
             
             // Get theme colors
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -2906,15 +2946,15 @@
                             labels: {
                                 usePointStyle: true,
                                 padding: 15,
-                                font: { size: 12 },
+                                font: { size: 13 },
                                 color: textColor
                             }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             padding: 12,
-                            titleFont: { size: 13 },
-                            bodyFont: { size: 12 },
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 },
                             callbacks: {
                                 label: function(context) {
                                     return `${context.dataset.label}: ${context.parsed.y}`;
@@ -2927,7 +2967,7 @@
                             beginAtZero: true,
                             ticks: {
                                 color: textColor,
-                                font: { size: 11 }
+                                font: { size: 12 }
                             },
                             grid: {
                                 color: gridColor
@@ -2936,7 +2976,7 @@
                         x: {
                             ticks: {
                                 color: textColor,
-                                font: { size: 10 },
+                                font: { size: 11 },
                                 maxRotation: 45,
                                 minRotation: 45
                             },
@@ -2957,20 +2997,26 @@
         function renderPieChart(productData) {
             const canvas = document.getElementById('main-chart');
             if (!canvas) return;
-            
+
             const ctx = canvas.getContext('2d');
-            
+
             // Destroy existing chart
             if (chartInstance) {
                 chartInstance.destroy();
             }
-            
+
+            // Limit to top 10 products by total activity
+            const topProducts = productData
+                .map(p => ({...p, total: Math.abs(p.nhap) + Math.abs(p.xuat)}))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 10);
+
             // Prepare data - combine nhap and xuat for all products
             const labels = [];
             const data = [];
             const backgrounds = [];
-            
-            productData.forEach((p, index) => {
+
+            topProducts.forEach((p, index) => {
                 if (p.nhap > 0) {
                     labels.push(`${p.name} (Nhập)`);
                     data.push(p.nhap);
@@ -3007,15 +3053,15 @@
                             labels: {
                                 usePointStyle: true,
                                 padding: 10,
-                                font: { size: 11 },
+                                font: { size: 12 },
                                 color: textColor
                             }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             padding: 12,
-                            titleFont: { size: 13 },
-                            bodyFont: { size: 12 },
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 },
                             callbacks: {
                                 label: function(context) {
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -3047,28 +3093,30 @@
             const sorted = [...productData].sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
             
             container.innerHTML = `
-                <table class="detail-table">
-                    <thead>
-                        <tr>
-                            <th>Sản Phẩm</th>
-                            <th style="text-align: center;">📥 Nhập</th>
-                            <th style="text-align: center;">📤 Xuất</th>
-                            <th style="text-align: center;">📦 Net</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${sorted.map(item => `
+                <div class="table-wrapper">
+                    <table class="detail-table">
+                        <thead>
                             <tr>
-                                <td class="product-name">${item.name}</td>
-                                <td class="quantity-nhap" style="text-align: center;">${item.nhap}</td>
-                                <td class="quantity-xuat" style="text-align: center;">${item.xuat}</td>
-                                <td class="quantity-net ${item.net > 0 ? 'positive' : item.net < 0 ? 'negative' : ''}" style="text-align: center;">
-                                    ${item.net > 0 ? '+' : ''}${item.net}
-                                </td>
+                                <th>Sản Phẩm</th>
+                                <th style="text-align: center;">📥 Nhập</th>
+                                <th style="text-align: center;">📤 Xuất</th>
+                                <th style="text-align: center;">📦 Net</th>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            ${sorted.map(item => `
+                                <tr>
+                                    <td class="product-name">${item.name}</td>
+                                    <td class="quantity-nhap" style="text-align: center;">${item.nhap}</td>
+                                    <td class="quantity-xuat" style="text-align: center;">${item.xuat}</td>
+                                    <td class="quantity-net ${item.net > 0 ? 'positive' : item.net < 0 ? 'negative' : ''}" style="text-align: center;">
+                                        ${item.net > 0 ? '+' : ''}${item.net}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
             `;
         }
 
@@ -3099,27 +3147,29 @@
             }
 
             container.innerHTML = `
-                <table class="inventory-table">
-                    <thead>
-                        <tr>
-                            <th>Sản Phẩm</th>
-                            <th>Đơn Vị</th>
-                            <th>Tồn Kho</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${pageProducts.map(product => {
-                            const qty = pageInventory[product.id] || 0;
-                            return `
-                                <tr>
-                                    <td><strong>${product.name}</strong></td>
-                                    <td>${product.unit}</td>
-                                    <td><strong style="color: ${qty > 0 ? 'var(--success)' : 'var(--danger)'};">${qty}</strong></td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Đơn Vị</th>
+                                <th>Tồn Kho</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${pageProducts.map(product => {
+                                const qty = pageInventory[product.id] || 0;
+                                return `
+                                    <tr>
+                                        <td><strong>${product.name}</strong></td>
+                                        <td>${product.unit}</td>
+                                        <td><strong style="color: ${qty > 0 ? 'var(--success)' : 'var(--danger)'};">${qty}</strong></td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
             `;
         }
 
@@ -3342,21 +3392,25 @@
             }
 
             container.innerHTML = locations.map(loc => {
+                const updateDate = loc.lastUpdate ? new Date(loc.lastUpdate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '';
                 const updateTime = new Date(loc.lastUpdate).toLocaleString('vi-VN');
                 return `
-                    <div class="list-item">
-                        <div class="list-item-header">
-                            <div class="list-item-title">${loc.location}</div>
-                            <div style="font-size: 20px; font-weight: 700; color: var(--primary);">
-                                ${loc.bandwidth} <span style="font-size: 14px; font-weight: 500;">Mbps</span>
+                    <div class="list-item" style="padding: 8px 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 600; margin-bottom: 2px;">${loc.location}</div>
+                                ${updateDate ? `<div style="font-size: 10px; color: var(--text-tertiary);">Cập nhật: ${updateDate}</div>` : ''}
+                            </div>
+                            <div style="font-size: 16px; font-weight: 700; color: var(--primary);">
+                                ${loc.bandwidth}<span style="font-size: 10px; font-weight: 500; opacity: 0.7; margin-left: 2px;">Mbps</span>
                             </div>
                         </div>
                         <div class="list-item-details">
-                            <div class="list-item-detail">
+                            <div class="list-item-detail" style="font-size: 11px;">
                                 <span>⏰</span>
                                 <span>${updateTime}</span>
                             </div>
-                            <div class="list-item-detail">
+                            <div class="list-item-detail" style="font-size: 11px;">
                                 <span>👤</span>
                                 <span>${loc.lastUser}</span>
                             </div>
@@ -3446,13 +3500,23 @@
 
             const location = document.getElementById('bt-location').value.trim();
             const eventType = document.getElementById('bt-event-type').value;
-            const change = parseFloat(document.getElementById('bt-change').value);
+            const changeValue = parseFloat(document.getElementById('bt-change').value);
             const after = parseFloat(document.getElementById('bt-after').value);
             const note = document.getElementById('bt-note').value.trim();
 
-            if (!location || !eventType || isNaN(change) || isNaN(after)) {
+            if (!location || !eventType || isNaN(changeValue) || isNaN(after)) {
                 showToast('error', 'Vui lòng điền đầy đủ thông tin!');
                 return;
+            }
+
+            // Tự động thêm dấu +/- dựa vào event type
+            let actualChange = 0;
+            if (eventType === 'moi') {
+                actualChange = Math.abs(changeValue);
+            } else if (eventType === 'tang') {
+                actualChange = Math.abs(changeValue);
+            } else if (eventType === 'giam') {
+                actualChange = -Math.abs(changeValue);
             }
 
             showLoading();
@@ -3462,7 +3526,7 @@
                     page: currentPage,
                     location: location,
                     event_type: eventType,
-                    bandwidth_change: change,
+                    bandwidth_change: actualChange, // Lưu với dấu đúng
                     bandwidth_after: after,
                     note: note,
                     user: currentUser
@@ -3506,27 +3570,29 @@
             }
 
             container.innerHTML = `
-                <table class="inventory-table">
-                    <thead>
-                        <tr>
-                            <th>Sản Phẩm</th>
-                            <th>Đơn Vị</th>
-                            <th>Tồn Kho</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${pageProducts.map(product => {
-                            const qty = pageInventory[product.id] || 0;
-                            return `
-                                <tr>
-                                    <td><strong>${product.name}</strong></td>
-                                    <td>${product.unit}</td>
-                                    <td><strong style="color: ${qty > 0 ? 'var(--success)' : 'var(--danger)'};">${qty}</strong></td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th>Đơn Vị</th>
+                                <th>Tồn Kho</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${pageProducts.map(product => {
+                                const qty = pageInventory[product.id] || 0;
+                                return `
+                                    <tr>
+                                        <td><strong>${product.name}</strong></td>
+                                        <td>${product.unit}</td>
+                                        <td><strong style="color: ${qty > 0 ? 'var(--success)' : 'var(--danger)'};">${qty}</strong></td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
             `;
         }
 
