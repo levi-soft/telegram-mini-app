@@ -2640,7 +2640,7 @@
             document.getElementById('location-id').value = '';
 
             if (locationId) {
-                const location = locations.find(loc => loc.id === locationId);
+                const location = locations.find(loc => String(loc.id) === String(locationId));
                 if (location) {
                     title.textContent = 'Sửa Khu Vực';
                     document.getElementById('location-id').value = location.id;
@@ -3383,7 +3383,7 @@
                 `;
                 
                 group.transactions.forEach(trans => {
-                    const product = products.find(p => p.id === trans.product_id);
+                    const product = products.find(p => String(p.id) === String(trans.product_id));
                     const productName = product ? product.name : 'N/A';
                     const time = new Date(trans.timestamp).toLocaleTimeString('vi-VN', {
                         hour: '2-digit',
@@ -3848,7 +3848,7 @@
             
             if (searchTerm) {
                 filtered = filtered.filter(t => {
-                    const product = products.find(p => p.id === t.product_id);
+                    const product = products.find(p => String(p.id) === String(t.product_id));
                     return product && product.name.toLowerCase().includes(searchTerm);
                 });
             }
@@ -3912,7 +3912,7 @@
                 `;
                 
                 group.transactions.forEach(trans => {
-                    const product = products.find(p => p.id === trans.product_id);
+                    const product = products.find(p => String(p.id) === String(trans.product_id));
                     const productName = product ? product.name : 'N/A';
                     const time = new Date(trans.timestamp).toLocaleTimeString('vi-VN', {
                         hour: '2-digit',
@@ -3990,7 +3990,7 @@
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
             pageTransactions.forEach(trans => {
-                const product = products.find(p => p.id === trans.product_id);
+                const product = products.find(p => String(p.id) === String(trans.product_id));
                 const time = new Date(trans.timestamp).toLocaleString('vi-VN');
                 const type = trans.type === 'nhap' ? 'Nhập về' : 'Cấp phát';
                 
@@ -4043,7 +4043,7 @@
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
             pageTransactions.forEach(trans => {
-                const product = products.find(p => p.id === trans.product_id);
+                const product = products.find(p => String(p.id) === String(trans.product_id));
                 const time = new Date(trans.timestamp).toLocaleString('vi-VN');
                 const type = trans.type === 'nhap' ? 'Nhập về' : 'Cấp phát';
                 
@@ -4081,7 +4081,7 @@
             
             if (productId) {
                 // Edit mode - có ID
-                const product = products.find(p => p.id === productId);
+                const product = products.find(p => String(p.id) === String(productId));
                 if (product) {
                     title.textContent = 'Sửa Sản Phẩm';
                     document.getElementById('product-id').value = product.id;
@@ -4340,7 +4340,7 @@
             const allTransactions = transactions
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
                 .map(trans => {
-                    const product = products.find(p => p.id === trans.product_id);
+                    const product = products.find(p => String(p.id) === String(trans.product_id));
                     return {
                         id: trans.id,
                         timestamp: new Date(trans.timestamp).toLocaleString('vi-VN'),
@@ -4478,7 +4478,7 @@
                         ${pageProducts.map(p => {
                             const qty = pageInventory[p.id] || 0;
                             const stockText = qty > 0 ? `còn: ${qty}` : 'hết hàng';
-                            return `<option value="${p.id}" ${item.product_id === p.id ? 'selected' : ''}>${p.name} (${stockText})</option>`;
+                            return `<option value="${p.id}" ${String(item.product_id) === String(p.id) ? 'selected' : ''}>${p.name} (${stockText})</option>`;
                         }).join('')}
                     </select>
                     <div class="bulk-item-quantity">
@@ -4512,7 +4512,7 @@
                             ${pageProducts.map(p => {
                                 const inv = pageInventory[p.id] || 0;
                                 const stockText = inv > 0 ? `còn: ${inv}` : 'hết hàng';
-                                return `<option value="${p.id}" ${item.product_id === p.id ? 'selected' : ''}>${p.name} (${stockText})</option>`;
+                                return `<option value="${p.id}" ${String(item.product_id) === String(p.id) ? 'selected' : ''}>${p.name} (${stockText})</option>`;
                             }).join('')}
                         </select>
                         <div class="bulk-item-quantity">
@@ -4551,7 +4551,7 @@
                 // Process each item sequentially (giữ cấu trúc data hiện tại)
                 for (const item of bulkNhapItems) {
                     try {
-                        const product = products.find(p => p.id === item.product_id);
+                        const product = products.find(p => String(p.id) === String(item.product_id));
                         const note = commonNote ? `${commonNote} - ${product?.name}` : product?.name;
                         
                         const response = await apiCall('transactions', 'POST', {
@@ -4608,7 +4608,7 @@
                 // Check inventory
                 const currentInv = inventory[currentPage]?.[item.product_id] || 0;
                 if (currentInv < item.quantity) {
-                    const product = products.find(p => p.id === item.product_id);
+                    const product = products.find(p => String(p.id) === String(item.product_id));
                     showToast('error', `Không đủ hàng: ${product?.name} (TK: ${currentInv})`);
                     return;
                 }
@@ -4624,7 +4624,7 @@
                 // Process each item sequentially (giữ cấu trúc data hiện tại)
                 for (const item of bulkXuatItems) {
                     try {
-                        const product = products.find(p => p.id === item.product_id);
+                        const product = products.find(p => String(p.id) === String(item.product_id));
                         const note = commonNote ? `${commonNote} - ${product?.name}` : product?.name;
                         
                         const response = await apiCall('transactions', 'POST', {
