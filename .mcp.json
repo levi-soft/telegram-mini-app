@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "n8n-mcp": {
+      "type": "http",
+      "url": "https://n8n.tayninh.cloud/mcp-server/http",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlYTA2ZGNiNi0zMzJiLTRhY2UtOGFjMi1jZDZmZDUzZTQ2ODEiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjY3YTM5MDUzLTI0ZTItNDU1ZC1iYmE5LWNiOWQzMTY1MDQwMyIsImlhdCI6MTc3NDI3NTc2M30.OzKewG1PckfIb2TRUWxvhYdFALaCSIS66mFgRWSaO60"
+      }
+    }
+  }
+}

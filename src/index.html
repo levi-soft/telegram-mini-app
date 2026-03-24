@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Xuất Nhập Hàng</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+    <!-- CSS -->
+    </style>
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- App Container -->
+    <div id="app" class="app">
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <h1 class="header-title">Xuất Nhập Hàng</h1>
+                <div class="header-actions">
+                    <button class="icon-btn" id="btn-sync" title="Đồng bộ">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Page Selector -->
+            <div class="page-selector">
+                <button class="page-btn active" data-page="RR88">RR88</button>
+                <button class="page-btn" data-page="XX88">XX88</button>
+                <button class="page-btn" data-page="MM88">MM88</button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content">
+
+            <!-- Dashboard Section -->
+            <section id="section-dashboard" class="section active">
+                <div class="section-header">
+                    <h2>Tổng Quan</h2>
+                </div>
+
+                <!-- Dashboard Bandwidth Widget -->
+                <div class="card">
+                    <div class="card-header"><h3>Băng Thông Hiện Tại</h3></div>
+                    <div id="dashboard-bandwidth-list"></div>
+                </div>
+
+                <!-- Chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Biểu Đồ Tồn Kho</h3>
+                        <div style="display:flex;gap:4px;">
+                            <button class="chip active" id="chart-type-bar" onclick="switchChartType('bar')">Cột</button>
+                            <button class="chip" id="chart-type-doughnut" onclick="switchChartType('doughnut')">Tròn</button>
+                        </div>
+                    </div>
+                    <div id="chart-container" style="position:relative;height:220px;">
+                        <canvas id="dashboard-chart"></canvas>
+                    </div>
+                    <div id="chart-empty" class="empty-state" style="display:none;">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-text">Chưa có sản phẩm</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <div class="card-header"><h3>Hoạt Động Gần Đây</h3></div>
+                    <div id="dashboard-recent-list"></div>
+                </div>
+            </section>
+
+            <!-- Nhập Hàng Section -->
+            <section id="section-nhap" class="section">
+                <div class="section-header">
+                    <h2>Nhập Hàng</h2>
+                </div>
+                <div class="card">
+                    <form id="form-nhap">
+                        <div class="form-group">
+                            <label class="form-label">Sản phẩm</label>
+                            <select class="form-select" id="nhap-product" required>
+                                <option value="">-- Chọn sản phẩm --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số lượng</label>
+                            <input class="form-input" type="number" id="nhap-quantity" min="1" required placeholder="Nhập số lượng">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ghi chú</label>
+                            <input class="form-input" type="text" id="nhap-note" placeholder="Ghi chú (tùy chọn)">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Nhập hàng</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Xuất Hàng Section -->
+            <section id="section-xuat" class="section">
+                <div class="section-header">
+                    <h2>Cấp Phát</h2>
+                </div>
+                <div class="card">
+                    <form id="form-xuat">
+                        <div class="form-group">
+                            <label class="form-label">Sản phẩm</label>
+                            <select class="form-select" id="xuat-product" required>
+                                <option value="">-- Chọn sản phẩm --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số lượng</label>
+                            <input class="form-input" type="number" id="xuat-quantity" min="1" required placeholder="Nhập số lượng">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ghi chú</label>
+                            <input class="form-input" type="text" id="xuat-note" placeholder="Người nhận / Mục đích">
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-full">Cấp phát</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Tồn Kho Section -->
+            <section id="section-tonkho" class="section">
+                <div class="section-header">
+                    <h2>Tồn Kho</h2>
+                    <button class="icon-btn" id="btn-export" title="Xuất Excel">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="search-box">
+                    <input class="form-input" type="text" id="search-tonkho" placeholder="Tìm sản phẩm...">
+                </div>
+                <div id="tonkho-list" class="list-container"></div>
+            </section>
+
+            <!-- Lịch Sử Section -->
+            <section id="section-lichsu" class="section">
+                <div class="section-header">
+                    <h2>Lịch Sử</h2>
+                </div>
+                <div class="filter-bar">
+                    <input class="form-input" type="text" id="search-lichsu" placeholder="Tìm kiếm...">
+                    <select class="form-select" id="filter-type">
+                        <option value="">Tất cả</option>
+                        <option value="nhap">Nhập</option>
+                        <option value="xuat">Xuất</option>
+                    </select>
+                </div>
+                <div id="lichsu-list" class="list-container"></div>
+            </section>
+
+            <!-- Danh Mục Section -->
+            <section id="section-danhmuc" class="section">
+                <div class="section-header">
+                    <h2>Danh Mục</h2>
+                    <button class="btn btn-primary btn-sm" id="btn-add-product">+ Thêm</button>
+                </div>
+                <div id="danhmuc-list" class="list-container"></div>
+            </section>
+
+            <!-- Khu Vực Section -->
+            <section id="section-khuvuc" class="section">
+                <div class="section-header">
+                    <h2>Khu Vực</h2>
+                    <button class="btn btn-primary btn-sm" id="btn-add-location">+ Thêm</button>
+                </div>
+                <div id="khuvuc-list" class="list-container"></div>
+            </section>
+
+            <!-- Băng Thông Section -->
+            <section id="section-bangthong" class="section">
+                <!-- Form Cập Nhật -->
+                <div class="card">
+                    <div class="card-header"><h3>Cập Nhật Băng Thông</h3></div>
+                    <form id="form-bangthong">
+                        <div class="form-group">
+                            <label class="form-label">Khu Vực</label>
+                            <select class="form-select" id="bt-location" required>
+                                <option value="">-- Chọn khu vực --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Loại Sự Kiện</label>
+                            <select class="form-select" id="bt-event-type" required>
+                                <option value="">-- Chọn loại sự kiện --</option>
+                                <option value="moi">Lắp Đặt Mới</option>
+                                <option value="tang">Tăng Băng Thông</option>
+                                <option value="giam">Giảm Băng Thông</option>
+                                <option value="chuyen">Đổi Nhà Cung Cấp</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="bt-network-type-group">
+                            <label class="form-label">Loại Mạng</label>
+                            <select class="form-select" id="bt-network-type">
+                                <option value="">-- Chọn loại mạng --</option>
+                                <option value="doanh_nghiep">Doanh Nghiệp</option>
+                                <option value="gia_dinh">Gia Đình</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="bt-provider-group">
+                            <label class="form-label">Nhà Cung Cấp</label>
+                            <select class="form-select" id="bt-provider">
+                                <option value="">-- Chọn nhà cung cấp --</option>
+                                <option value="ezecom">EZECOM</option>
+                                <option value="today">Today</option>
+                                <option value="sinet">SINet</option>
+                                <option value="mekong">MekongNet</option>
+                                <option value="telnet">TelNet</option>
+                                <option value="online">Online</option>
+                                <option value="metfone">Metfone</option>
+                                <option value="other">Khác</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Băng Thông Hiện Tại (Mbps)</label>
+                            <input class="form-input" type="number" id="bt-current" value="0" min="0" step="0.1" readonly style="opacity: 0.7;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Giá Trị Thay Đổi (Mbps)</label>
+                            <input class="form-input" type="number" id="bt-change" placeholder="VD: 100" min="0" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Băng Thông Sau (Mbps)</label>
+                            <input class="form-input" type="number" id="bt-after" value="0" min="0" step="0.1" readonly style="font-weight: 700; font-size: 16px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ghi Chú</label>
+                            <input class="form-input" type="text" id="bt-note" placeholder="Mô tả chi tiết...">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Lưu Cập Nhật</button>
+                    </form>
+                </div>
+
+                <!-- Băng Thông Hiện Tại -->
+                <div class="card">
+                    <div class="card-header"><h3>Băng Thông Hiện Tại</h3></div>
+                    <div id="current-bandwidth-list"></div>
+                </div>
+
+                <!-- Lịch Sử Băng Thông -->
+                <div class="card">
+                    <div class="card-header"><h3>Lịch Sử Thay Đổi</h3></div>
+                    <div class="search-box">
+                        <input class="form-input" type="text" id="search-bandwidth" placeholder="Tìm theo khu vực...">
+                    </div>
+                    <div id="bandwidth-history-list"></div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-section="dashboard">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                <span>Tổng quan</span>
+            </button>
+            <button class="nav-btn" data-section="nhap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                </svg>
+                <span>Nhập</span>
+            </button>
+            <button class="nav-btn" data-section="xuat">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 19V5M5 12l7-7 7 7"/>
+                </svg>
+                <span>Xuất</span>
+            </button>
+            <button class="nav-btn" data-section="tonkho">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                </svg>
+                <span>Tồn kho</span>
+            </button>
+            <button class="nav-btn" data-section="lichsu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                </svg>
+                <span>Lịch sử</span>
+            </button>
+            <button class="nav-btn" data-section="danhmuc">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                    <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+                    <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                <span>Danh mục</span>
+            </button>
+            <button class="nav-btn" data-section="khuvuc">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span>Khu vực</span>
+            </button>
+            <button class="nav-btn" data-section="bangthong">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>Băng thông</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- Modal: Product -->
+    <div id="modal-product" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-product-title">Thêm Sản Phẩm</h3>
+                <button class="modal-close" onclick="closeModal('modal-product')">&times;</button>
+            </div>
+            <form id="form-product">
+                <input type="hidden" id="product-id">
+                <div class="form-group">
+                    <label class="form-label">Tên sản phẩm</label>
+                    <input class="form-input" type="text" id="product-name" required placeholder="Nhập tên sản phẩm">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Đơn vị</label>
+                    <input class="form-input" type="text" id="product-unit" required placeholder="Cái, Chiếc, Hộp...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mô tả</label>
+                    <input class="form-input" type="text" id="product-description" placeholder="Mô tả (tùy chọn)">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Lưu</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Location -->
+    <div id="modal-location" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-location-title">Thêm Khu Vực</h3>
+                <button class="modal-close" onclick="closeModal('modal-location')">&times;</button>
+            </div>
+            <form id="form-location">
+                <input type="hidden" id="location-id">
+                <div class="form-group">
+                    <label class="form-label">Tên Khu Vực</label>
+                    <input class="form-input" type="text" id="location-name" required placeholder="VD: Văn phòng tầng 8">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mô tả</label>
+                    <input class="form-input" type="text" id="location-description" placeholder="Mô tả (tùy chọn)">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Lưu</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    <!-- JS -->
+    </script>
+
+</body>
+</html>

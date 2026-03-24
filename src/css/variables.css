@@ -1,0 +1,85 @@
+/* ============================================
+   CSS Variables - Telegram Native Theme
+   ============================================ */
+:root {
+    /* === Telegram Theme Colors ===
+       Auto-synced with user's Telegram theme via SDK
+       Fallbacks match Telegram's default light theme */
+
+    /* Primary */
+    --primary: var(--tg-theme-button-color, #3390ec);
+    --primary-text: var(--tg-theme-button-text-color, #ffffff);
+    --accent: var(--tg-theme-accent-text-color, #3390ec);
+    --link: var(--tg-theme-link-color, #3390ec);
+    --danger: var(--tg-theme-destructive-text-color, #e53935);
+    --success: #4caf50;
+    --warning: #f59e0b;
+
+    /* Backgrounds */
+    --bg-primary: var(--tg-theme-bg-color, #ffffff);
+    --bg-secondary: var(--tg-theme-secondary-bg-color, #f4f4f5);
+    --bg-tertiary: var(--tg-theme-secondary-bg-color, #efeff4);
+    --bg-elevated: var(--tg-theme-section-bg-color, #ffffff);
+    --bg-card: var(--tg-theme-section-bg-color, #ffffff);
+    --bg-bottom-bar: var(--tg-theme-bottom-bar-bg-color, var(--tg-theme-bg-color, #ffffff));
+    --bg-header: var(--tg-theme-header-bg-color, var(--tg-theme-bg-color, #ffffff));
+
+    /* Text */
+    --text-primary: var(--tg-theme-text-color, #000000);
+    --text-secondary: var(--tg-theme-subtitle-text-color, #707579);
+    --text-tertiary: var(--tg-theme-hint-color, #999999);
+    --text-section-header: var(--tg-theme-section-header-text-color, #707579);
+
+    /* Separator */
+    --separator: var(--tg-theme-section-separator-color, rgba(0, 0, 0, 0.08));
+
+    /* Shadows - Telegram-style subtle */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.1);
+    --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.04);
+    --shadow-btn: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-pressed: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    /* Typography & Radius */
+    --font: -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    --radius: 16px;
+    --radius-sm: 12px;
+    --radius-lg: 20px;
+
+    /* Border */
+    --border: 1px solid var(--separator);
+}
+
+/* Dark Mode fallbacks for browser testing */
+[data-theme="dark"] {
+    --primary: var(--tg-theme-button-color, #5288c1);
+    --accent: var(--tg-theme-accent-text-color, #6ab2f2);
+    --link: var(--tg-theme-link-color, #6ab3f3);
+    --danger: var(--tg-theme-destructive-text-color, #ec3942);
+
+    --bg-primary: var(--tg-theme-bg-color, #17212b);
+    --bg-secondary: var(--tg-theme-secondary-bg-color, #232e3c);
+    --bg-tertiary: var(--tg-theme-secondary-bg-color, #1e2c3a);
+    --bg-elevated: var(--tg-theme-section-bg-color, #17212b);
+    --bg-card: var(--tg-theme-section-bg-color, #17212b);
+
+    --text-primary: var(--tg-theme-text-color, #f5f5f5);
+    --text-secondary: var(--tg-theme-subtitle-text-color, #708499);
+    --text-tertiary: var(--tg-theme-hint-color, #708499);
+
+    --separator: var(--tg-theme-section-separator-color, rgba(255, 255, 255, 0.08));
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-btn: 0 1px 3px rgba(0, 0, 0, 0.3);
+}

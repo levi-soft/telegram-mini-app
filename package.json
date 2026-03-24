@@ -1,0 +1,11 @@
+{
+  "name": "telegram-mini-app",
+  "version": "3.0.0",
+  "description": "Telegram Mini App - Xuất Nhập Hàng (n8n backend)",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --watch"
+  },
+  "keywords": ["telegram", "mini-app", "n8n", "inventory"],
+  "license": "MIT"
+}
